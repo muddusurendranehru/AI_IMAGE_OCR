@@ -1,0 +1,11 @@
+🚀 AI IMAGE ORGANIZER - BACKUP RESTORE INSTRUCTIONS 
+================================================== 
+ 
+1. Copy this entire folder to: C:\Users\pc\Desktop\image-organizer\ 
+2. Open PowerShell in that directory 
+3. Run: node server.js 
+4. Go to: http://localhost:3008 
+ 
+BACKUP CREATED: 2025-07-22_06-16-40 
+ 
+✅ Your AI Image Organizer should work perfectly! 
