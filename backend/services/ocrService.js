@@ -4,7 +4,16 @@ const vision = require('@google-cloud/vision');
 const path = require('path');
 const fs = require('fs').promises;
 const pdfParse = require('pdf-parse');
-const pdfPoppler = require('pdf-poppler');
+
+// Try to load pdf-poppler (optional - requires system poppler-utils)
+let pdfPoppler = null;
+try {
+    pdfPoppler = require('pdf-poppler');
+    console.log('✅ pdf-poppler loaded successfully');
+} catch (error) {
+    console.warn('⚠️ pdf-poppler not available (requires poppler-utils system package)');
+    console.warn('   Will use pdf-parse only for PDF processing');
+}
 
 // Initialize Google Vision client (if API key is provided)
 let visionClient = null;
@@ -48,6 +57,19 @@ async function processWithPDF(pdfPath) {
         
         // Step 3: PDF is image-based or has no text - run OCR
         console.log('⚠️ PDF has no text or very little - treating as image-based PDF');
+        
+        // Check if pdf-poppler is available
+        if (!pdfPoppler) {
+            console.warn('⚠️ pdf-poppler not available - cannot process image-based PDFs');
+            console.warn('   Returning extracted text (may be incomplete)');
+            return {
+                text: data.text || 'PDF appears to be image-based but OCR tools not available on this system. Please upload images instead.',
+                confidence: 50,
+                pages: data.numpages,
+                warning: 'Image-based PDF detected but OCR unavailable'
+            };
+        }
+        
         console.log('🔄 Converting PDF pages to images and running OCR...');
         
         const outputDir = path.dirname(pdfPath);
