@@ -1,0 +1,291 @@
+/* Lab Data Review Form Styles */
+.lab-data-review {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.review-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.review-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+}
+
+.review-subtitle {
+  margin: 0;
+  opacity: 0.95;
+  font-size: 16px;
+}
+
+.batch-info {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.review-content {
+  display: flex;
+  gap: 20px;
+  min-height: 600px;
+}
+
+/* OCR Text Panel */
+.ocr-text-panel {
+  flex: 0 0 400px;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #ffffff;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.toggle-btn {
+  padding: 6px 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #5a6268;
+}
+
+.ocr-text-display {
+  flex: 1;
+  padding: 20px;
+  margin: 0;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #333;
+}
+
+/* Form Panel */
+.form-panel {
+  flex: 1;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 25px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-panel.full-width {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.show-ocr-btn {
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.show-ocr-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.form-sections {
+  margin-bottom: 30px;
+}
+
+.form-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.form-section h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #555;
+}
+
+.form-field.required label::after {
+  content: ' *';
+  color: #dc3545;
+}
+
+.form-field input,
+.form-field select {
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-field input:valid {
+  border-color: #28a745;
+}
+
+/* Review Actions */
+.review-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  padding: 20px 0;
+  border-top: 2px solid #e0e0e0;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 14px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 14px 40px;
+  font-size: 18px;
+}
+
+.btn-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.required-note {
+  text-align: center;
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .review-content {
+    flex-direction: column;
+  }
+  
+  .ocr-text-panel {
+    flex: 0 0 300px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .lab-data-review {
+    padding: 10px;
+  }
+  
+  .review-header h2 {
+    font-size: 22px;
+  }
+  
+  .ocr-text-panel {
+    flex: 0 0 250px;
+  }
+  
+  .form-panel {
+    padding: 15px;
+  }
+  
+  .review-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+

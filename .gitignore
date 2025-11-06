@@ -1,36 +1,58 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
-
 # Dependencies
 node_modules/
+*/node_modules/
 
-# Uploads and user data
+# Environment Variables (SENSITIVE - DO NOT PUSH!)
+.env
+backend/.env
+frontend/.env
+*.env.local
+*.env.production
+
+# Uploads (User Data)
 uploads/
-
-# Keep package-lock.json and data files
-!package-lock.json
-!data/**/*.json
+backend/uploads/
+*.pdf
+*.jpg
+*.jpeg
+*.png
 
 # Logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+logs/
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Build outputs
-dist/
+# Build
 build/
+dist/
+frontend/build/
+.cache/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Database
+*.sqlite
+*.db
+
+# Misc
+.env.backup
+.env.production.local

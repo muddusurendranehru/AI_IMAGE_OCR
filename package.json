@@ -1,28 +1,49 @@
 {
-  "name": "image-organizer",
+  "name": "ocr-lab-report-backend",
   "version": "1.0.0",
-  "description": "Automated image organization and categorization system",
-  "main": "src/app.js",
+  "description": "OCR Lab Report Web App - Backend API with Authentication and OCR Processing",
+  "main": "backend/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
-    "scan": "node src/scanImages.js",
-    "sync": "node src/airtableSync.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/app.js",
+    "dev": "nodemon backend/app.js",
+    "frontend": "cd frontend && npm start",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:install": "cd frontend && npm install",
+    "install-all": "npm install && npm run frontend:install",
+    "dev-all": "concurrently \"npm run dev\" \"npm run frontend\"",
+    "test": "echo \"See TESTING_GUIDE.md for testing instructions\" && exit 0"
   },
   "keywords": [
-    "image",
-    "organizer",
-    "ai",
-    "automation"
+    "ocr",
+    "lab-report",
+    "healthcare",
+    "tesseract",
+    "postgresql",
+    "express",
+    "react",
+    "neon"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "airtable": "^0.12.2",
+    "@google-cloud/vision": "^4.3.2",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.0",
-    "express": "^5.1.0",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
-    "openai": "^5.10.1"
+    "pdf-parse": "^1.1.1",
+    "pdf-poppler": "^0.2.3",
+    "pg": "^8.13.1",
+    "sharp": "^0.34.4",
+    "tesseract.js": "^5.1.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

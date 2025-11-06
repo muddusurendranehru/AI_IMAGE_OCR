@@ -1,0 +1,13 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+}
+

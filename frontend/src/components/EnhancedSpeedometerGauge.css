@@ -1,0 +1,181 @@
+/* Enhanced Speedometer Gauge Styles - Using react-speedometer library */
+/* OPTIONAL ALTERNATIVE - Does not conflict with SpeedometerGauge.css */
+
+.enhanced-speedometer-gauge {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.enhanced-speedometer-gauge:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.enhanced-speedometer-gauge .gauge-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 5px;
+}
+
+.enhanced-speedometer-gauge .gauge-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.enhanced-speedometer-gauge .gauge-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.enhanced-speedometer-gauge .gauge-status {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.enhanced-speedometer-gauge .status-badge {
+  padding: 8px 20px;
+  border-radius: 25px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.5s ease 0.3s backwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enhanced-speedometer-gauge .risk-level {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.enhanced-speedometer-gauge .gauge-interpretation {
+  margin-top: 15px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border-left: 3px solid #3b82f6;
+}
+
+.enhanced-speedometer-gauge .gauge-interpretation p {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.enhanced-speedometer-gauge .gauge-zones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  padding: 0 10px;
+}
+
+.enhanced-speedometer-gauge .zone-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.enhanced-speedometer-gauge .zone-label span {
+  font-size: 1.2rem;
+  margin-right: 4px;
+}
+
+/* Unavailable state */
+.enhanced-speedometer-gauge.unavailable {
+  opacity: 0.6;
+}
+
+.enhanced-speedometer-gauge .gauge-unavailable {
+  padding: 40px 20px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 2px dashed #d1d5db;
+}
+
+.enhanced-speedometer-gauge .gauge-unavailable p {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .enhanced-speedometer-gauge {
+    padding: 20px;
+  }
+
+  .enhanced-speedometer-gauge .gauge-title {
+    font-size: 1.2rem;
+  }
+
+  .enhanced-speedometer-gauge .gauge-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .enhanced-speedometer-gauge .gauge-container {
+    max-width: 250px;
+  }
+
+  .enhanced-speedometer-gauge .status-badge {
+    font-size: 0.85rem;
+    padding: 6px 16px;
+  }
+}
+
+/* Animation for gauge appearance */
+.enhanced-speedometer-gauge {
+  animation: slideUpFade 0.6s ease backwards;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for multiple gauges */
+.enhanced-speedometer-gauge:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.enhanced-speedometer-gauge:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.enhanced-speedometer-gauge:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.enhanced-speedometer-gauge:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
