@@ -67,24 +67,28 @@ https://ocr-lab-backend.onrender.com/api
 5. Settings:
    - Name: `ocr-lab-backend`
    - Region: `Singapore`
-   - Root Directory: `backend`
+   - **⚠️ Root Directory: `backend`** ← **CRITICAL! Don't leave empty!**
    - Build Command: `npm install`
    - Start Command: `node app.js`
 6. Click "Advanced" → Add 4 environment variables (above)
 7. Create Web Service
 8. **COPY your backend URL when it shows "Live"**
 
+**⚠️ IMPORTANT:** Your project has separate `backend/` and `frontend/` folders (monorepo structure). You **MUST** specify the Root Directory, or Render won't find your `package.json` and deployment will fail!
+
 ### Step 2: Deploy Frontend
 1. New + → Static Site
 2. Connect same repository
 3. Settings:
    - Name: `ocr-lab-frontend`
-   - Root Directory: `frontend`
+   - **⚠️ Root Directory: `frontend`** ← **CRITICAL! Don't leave empty!**
    - Build Command: `npm install && npm run build`
    - Publish Directory: `build`
 4. Add environment variable: `REACT_APP_API_URL` (use your backend URL)
 5. Create Static Site
 6. Wait for "Live" status
+
+**⚠️ IMPORTANT:** Just like the backend, you **MUST** specify `frontend` as the Root Directory!
 
 ### Step 3: Test
 1. Open your frontend URL
