@@ -172,35 +172,37 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
     try {
-        // Test database connection (non-blocking - server starts even if DB is slow)
-        console.log('🔌 Testing database connection...');
-        db.testConnection().catch(err => {
-            console.warn('⚠️ Database connection test failed, but server will continue');
-            console.warn('   Database will retry on first request');
-        });
-        
         // Start listening immediately (don't wait for DB)
+        // Database connection will be tested in background
         app.listen(PORT, '0.0.0.0', () => {
             console.log('\n' + '='.repeat(50));
             console.log('🚀 OCR LAB REPORT BACKEND SERVER');
             console.log('='.repeat(50));
-            console.log(`✅ Server running on: http://localhost:${PORT}`);
-            console.log(`✅ Database: Neon PostgreSQL (AI_OCR)`);
+            console.log(`✅ Server running on port ${PORT}`);
             console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`✅ OCR Method: ${process.env.USE_TESSERACT === 'true' ? 'Tesseract (Local)' : 'Google Vision (API)'}`);
             console.log('\n📚 API Endpoints:');
-            console.log('   POST   /api/auth/signup       - Register new user');
-            console.log('   POST   /api/auth/login        - User login');
-            console.log('   POST   /api/auth/logout       - User logout');
-            console.log('   GET    /api/auth/me           - Get current user');
-            console.log('   POST   /api/reports/upload    - Upload lab report');
-            console.log('   GET    /api/reports           - Get all reports');
-            console.log('   GET    /api/reports/:id       - Get report by ID');
-            console.log('   PUT    /api/reports/:id       - Update report');
-            console.log('   DELETE /api/reports/:id       - Delete report');
-            console.log('   GET    /api/reports/search    - Search reports');
-            console.log('   GET    /api/status            - Server status');
+            console.log('   GET    /health              - Health check (no DB)');
+            console.log('   GET    /                    - API info');
+            console.log('   GET    /api/status           - Full status');
+            console.log('   POST   /api/auth/signup      - Register new user');
+            console.log('   POST   /api/auth/login       - User login');
+            console.log('   POST   /api/auth/logout      - User logout');
+            console.log('   GET    /api/auth/me          - Get current user');
+            console.log('   POST   /api/reports/upload   - Upload lab report');
+            console.log('   GET    /api/reports          - Get all reports');
+            console.log('   GET    /api/reports/:id      - Get report by ID');
+            console.log('   PUT    /api/reports/:id      - Update report');
+            console.log('   DELETE /api/reports/:id      - Delete report');
+            console.log('   GET    /api/reports/search   - Search reports');
             console.log('='.repeat(50) + '\n');
+            
+            // Test database connection in background (non-blocking)
+            console.log('🔌 Testing database connection in background...');
+            db.testConnection().catch(err => {
+                console.warn('⚠️ Database connection test failed, but server is running');
+                console.warn('   Database will retry on first request');
+            });
         });
         
     } catch (error) {

@@ -3,15 +3,15 @@ const { Pool } = require('pg');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-// Create PostgreSQL connection pool
+// Create PostgreSQL connection pool with better timeout handling
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false // Required for Neon PostgreSQL
     },
-    max: 20, // Maximum number of clients in the pool
+    max: 10, // Reduced from 20 for Render free tier
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 15000, // 15 seconds for Neon wakeup (free tier can be slow)
+    connectionTimeoutMillis: 10000, // Reduced to 10 seconds
 });
 
 // Test database connection
@@ -20,16 +20,17 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-    console.error('❌ Unexpected database error:', err);
-    process.exit(-1);
+    console.error('❌ Unexpected database pool error:', err.message);
+    // Don't exit - let the server continue and retry on next request
+    // process.exit(-1);
 });
 
 // Helper function to test connection with timeout
 async function testConnection() {
     try {
-        // Add timeout to prevent hanging
+        // Add shorter timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Database connection timeout after 15 seconds')), 15000);
+            setTimeout(() => reject(new Error('Database connection timeout after 10 seconds')), 10000);
         });
         
         const queryPromise = pool.query('SELECT NOW()');
@@ -40,6 +41,7 @@ async function testConnection() {
     } catch (error) {
         console.error('❌ Database connection failed:', error.message);
         console.warn('⚠️ Server will continue but database operations may fail');
+        console.warn('   Database will retry on first request');
         return false;
     }
 }
