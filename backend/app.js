@@ -73,6 +73,16 @@ ensureDirectories();
 // ROUTES
 // =====================================================
 
+// Health check route (no database required)
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
 // Health check route
 app.get('/', (req, res) => {
     res.json({
@@ -162,22 +172,15 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
     try {
-        // Test database connection
+        // Test database connection (non-blocking - server starts even if DB is slow)
         console.log('🔌 Testing database connection...');
-        const isConnected = await db.testConnection();
+        db.testConnection().catch(err => {
+            console.warn('⚠️ Database connection test failed, but server will continue');
+            console.warn('   Database will retry on first request');
+        });
         
-        if (!isConnected) {
-            throw new Error('Database connection failed');
-        }
-        
-        // Display table contents (optional, for debugging)
-        // Temporarily disabled to speed up startup
-        // if (process.env.NODE_ENV === 'development') {
-        //     await db.displayTables();
-        // }
-        
-        // Start listening
-        app.listen(PORT, () => {
+        // Start listening immediately (don't wait for DB)
+        app.listen(PORT, '0.0.0.0', () => {
             console.log('\n' + '='.repeat(50));
             console.log('🚀 OCR LAB REPORT BACKEND SERVER');
             console.log('='.repeat(50));

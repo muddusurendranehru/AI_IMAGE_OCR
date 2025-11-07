@@ -11,7 +11,7 @@ const pool = new Pool({
     },
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000, // Increased to 10 seconds for Neon wakeup
+    connectionTimeoutMillis: 15000, // 15 seconds for Neon wakeup (free tier can be slow)
 });
 
 // Test database connection
@@ -24,14 +24,22 @@ pool.on('error', (err) => {
     process.exit(-1);
 });
 
-// Helper function to test connection
+// Helper function to test connection with timeout
 async function testConnection() {
     try {
-        const result = await pool.query('SELECT NOW()');
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Database connection timeout after 15 seconds')), 15000);
+        });
+        
+        const queryPromise = pool.query('SELECT NOW()');
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+        
         console.log('✅ Database connection successful at:', result.rows[0].now);
         return true;
     } catch (error) {
         console.error('❌ Database connection failed:', error.message);
+        console.warn('⚠️ Server will continue but database operations may fail');
         return false;
     }
 }
