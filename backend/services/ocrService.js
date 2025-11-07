@@ -6,13 +6,19 @@ const fs = require('fs').promises;
 const pdfParse = require('pdf-parse');
 
 // Try to load pdf-poppler (optional - requires system poppler-utils)
+// Skip on Linux/Render as pdf-poppler has platform compatibility issues
 let pdfPoppler = null;
-try {
-    pdfPoppler = require('pdf-poppler');
-    console.log('✅ pdf-poppler loaded successfully');
-} catch (error) {
-    console.warn('⚠️ pdf-poppler not available (requires poppler-utils system package)');
-    console.warn('   Will use pdf-parse only for PDF processing');
+const isLinux = process.platform === 'linux';
+if (!isLinux) {
+    try {
+        pdfPoppler = require('pdf-poppler');
+        console.log('✅ pdf-poppler loaded successfully');
+    } catch (error) {
+        console.warn('⚠️ pdf-poppler not available (requires poppler-utils system package)');
+        console.warn('   Will use pdf-parse only for PDF processing');
+    }
+} else {
+    console.log('ℹ️ Skipping pdf-poppler on Linux (using pdf-parse only for PDF processing)');
 }
 
 // Initialize Google Vision client (if API key is provided)
