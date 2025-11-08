@@ -100,10 +100,21 @@ const BatchUpload = ({ onSuccess, onCancel }) => {
       });
 
       console.log('📤 Extracting OCR from', files.length, 'files...');
-      const response = await reportsAPI.batchUpload(formData);
+      
+      // Add client-side timeout (5 minutes)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout: Processing took too long. Please try with fewer files.')), 5 * 60 * 1000);
+      });
+      
+      const uploadPromise = reportsAPI.batchUpload(formData);
+      const response = await Promise.race([uploadPromise, timeoutPromise]);
 
       if (response.success) {
         console.log('✅ OCR extraction successful!', response);
+        console.log(`📊 Processed: ${response.filesProcessed}/${response.filesTotal} files`);
+        if (response.filesFailed > 0) {
+          console.warn(`⚠️ ${response.filesFailed} files failed to process`);
+        }
         
         // Store OCR data and move to review stage
         setOcrData({
@@ -120,7 +131,13 @@ const BatchUpload = ({ onSuccess, onCancel }) => {
 
     } catch (err) {
       console.error('❌ OCR extraction error:', err);
-      setError(err.message || 'Failed to extract OCR text');
+      if (err.message.includes('timeout')) {
+        setError('⏱️ Processing timeout: The upload took too long. Please try with fewer files (max 5-10 files at once).');
+      } else if (err.message.includes('Network Error')) {
+        setError('🌐 Network error: Check your connection and try again.');
+      } else {
+        setError(err.message || 'Failed to extract OCR text. Please try again.');
+      }
     } finally {
       setUploading(false);
     }

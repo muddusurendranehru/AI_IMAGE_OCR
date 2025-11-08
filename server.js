@@ -10,136 +10,138 @@ const PORT = process.env.PORT || 3008;
 
 // Initialize OpenAI
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
-        cb(null, uniqueName);
-    }
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueName =
+      Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
 });
 
-const upload = multer({ 
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files allowed!'));
-        }
-    },
-    limits: { fileSize: 10 * 1024 * 1024 }
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files allowed!'));
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 async function ensureDirs() {
-    try {
-        await fs.access('./uploads');
-    } catch {
-        await fs.mkdir('./uploads', { recursive: true });
-    }
-    try {
-        await fs.access('./data');
-    } catch {
-        await fs.mkdir('./data', { recursive: true });
-    }
+  try {
+    await fs.access('./uploads');
+  } catch {
+    await fs.mkdir('./uploads', { recursive: true });
+  }
+  try {
+    await fs.access('./data');
+  } catch {
+    await fs.mkdir('./data', { recursive: true });
+  }
 }
 
 async function loadDatabase() {
-    try {
-        const data = await fs.readFile('./data/images.json', 'utf8');
-        return JSON.parse(data);
-    } catch {
-        return { images: [] };
-    }
+  try {
+    const data = await fs.readFile('./data/images.json', 'utf8');
+    return JSON.parse(data);
+  } catch {
+    return { images: [] };
+  }
 }
 
 async function saveDatabase(data) {
-    await ensureDirs();
-    await fs.writeFile('./data/images.json', JSON.stringify(data, null, 2));
+  await ensureDirs();
+  await fs.writeFile('./data/images.json', JSON.stringify(data, null, 2));
 }
 
 // AI Image Analysis Function
 async function analyzeImageWithAI(imagePath) {
-    try {
-        console.log('🤖 Starting AI analysis...');
-        
-        // Convert image to base64
-        const imageBuffer = await fs.readFile(imagePath);
-        const base64Image = imageBuffer.toString('base64');
-        const mimeType = path.extname(imagePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
-        
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "text",
-                            text: "Analyze this image and provide: 1) Primary category (nature, people, food, technology, architecture, animals, vehicles, sports, art, etc.) 2) 3-5 descriptive tags/labels 3) A brief engaging caption (1-2 sentences). Format as JSON with keys: category, tags (array), caption."
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: `data:${mimeType};base64,${base64Image}`
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens: 300
-        });
+  try {
+    console.log('🤖 Starting AI analysis...');
 
-        const analysisText = response.choices[0].message.content;
-        console.log('🎯 AI Analysis:', analysisText);
-        
-        // Clean the response and try to parse JSON
-        try {
-            // Remove markdown code blocks if present
-            let cleanedText = analysisText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-            
-            // Try to find JSON in the response
-            const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                const analysis = JSON.parse(jsonMatch[0]);
-                return {
-                    category: analysis.category || 'general',
-                    tags: Array.isArray(analysis.tags) ? analysis.tags : ['image'],
-                    caption: analysis.caption || 'An interesting image',
-                    confidence: 'high'
-                };
-            } else {
-                throw new Error('No JSON found in response');
+    // Convert image to base64
+    const imageBuffer = await fs.readFile(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+    const mimeType = path.extname(imagePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Analyze this image and provide: 1) Primary category (nature, people, food, technology, architecture, animals, vehicles, sports, art, etc.) 2) 3-5 descriptive tags/labels 3) A brief engaging caption (1-2 sentences). Format as JSON with keys: category, tags (array), caption.'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType};base64,${base64Image}`
+              }
             }
-        } catch (parseError) {
-            console.log('🔧 Parsing failed, extracting manually...');
-            // Manual extraction as fallback
-            const categoryMatch = analysisText.match(/"category":\s*"([^"]+)"/);
-            const tagsMatch = analysisText.match(/"tags":\s*\[([^\]]+)\]/);
-            const captionMatch = analysisText.match(/"caption":\s*"([^"]+)"/);
-            
-            return {
-                category: categoryMatch ? categoryMatch[1] : 'general',
-                tags: tagsMatch ? tagsMatch[1].split(',').map(tag => tag.trim().replace(/"/g, '')) : ['analyzed'],
-                caption: captionMatch ? captionMatch[1] : analysisText.substring(0, 100) + '...',
-                confidence: 'medium'
-            };
+          ]
         }
-        
-    } catch (error) {
-        console.error('❌ AI Analysis failed:', error.message);
+      ],
+      max_tokens: 300
+    });
+
+    const analysisText = response.choices[0].message.content;
+    console.log('🎯 AI Analysis:', analysisText);
+
+    // Clean the response and try to parse JSON
+    try {
+      // Remove markdown code blocks if present
+      let cleanedText = analysisText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+      // Try to find JSON in the response
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const analysis = JSON.parse(jsonMatch[0]);
         return {
-            category: 'general',
-            tags: ['unanalyzed'],
-            caption: 'Image uploaded successfully',
-            confidence: 'none',
-            error: error.message
+          category: analysis.category || 'general',
+          tags: Array.isArray(analysis.tags) ? analysis.tags : ['image'],
+          caption: analysis.caption || 'An interesting image',
+          confidence: 'high'
         };
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.log('🔧 Parsing failed, extracting manually...');
+      // Manual extraction as fallback
+      const categoryMatch = analysisText.match(/"category":\s*"([^"]+)"/);
+      const tagsMatch = analysisText.match(/"tags":\s*\[([^\]]+)\]/);
+      const captionMatch = analysisText.match(/"caption":\s*"([^"]+)"/);
+
+      return {
+        category: categoryMatch ? categoryMatch[1] : 'general',
+        tags: tagsMatch
+          ? tagsMatch[1].split(',').map((tag) => tag.trim().replace(/"/g, ''))
+          : ['analyzed'],
+        caption: captionMatch ? captionMatch[1] : analysisText.substring(0, 100) + '...',
+        confidence: 'medium'
+      };
     }
+  } catch (error) {
+    console.error('❌ AI Analysis failed:', error.message);
+    return {
+      category: 'general',
+      tags: ['unanalyzed'],
+      caption: 'Image uploaded successfully',
+      confidence: 'none',
+      error: error.message
+    };
+  }
 }
 
 app.use(express.static('public'));
@@ -147,7 +149,7 @@ app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send(`
+  res.send(`
         <!DOCTYPE html>
         <html>
         <head>
@@ -263,63 +265,64 @@ app.get('/', (req, res) => {
 });
 
 app.post('/upload', upload.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.json({ success: false, error: 'No file uploaded' });
-        }
-
-        console.log('📁 File uploaded:', req.file.filename);
-        console.log('🔍 Original name:', req.file.originalname);
-
-        const imagePath = req.file.path;
-        const imageData = {
-            id: Date.now().toString(),
-            filename: req.file.filename,
-            originalName: req.file.originalname,
-            size: req.file.size,
-            uploadDate: new Date().toISOString(),
-            analysis: null
-        };
-
-        // Perform AI analysis
-        console.log('🤖 Starting AI analysis...');
-        const analysis = await analyzeImageWithAI(imagePath);
-        imageData.analysis = analysis;
-
-        // Save to local JSON database
-        const db = await loadDatabase();
-        db.images.push(imageData);
-        await saveDatabase(db);
-
-        console.log('✅ Image saved with AI analysis!');
-        console.log(`🎯 Category: ${analysis.category}`);
-        console.log(`🏷️ Tags: ${analysis.tags.join(', ')}`);
-        console.log(`✍️ Caption: ${analysis.caption}`);
-        
-        res.json({ 
-            success: true, 
-            message: `AI Analysis Complete! Category: ${analysis.category} | Tags: ${analysis.tags.join(', ')}`,
-            imageData: imageData
-        });
-
-    } catch (error) {
-        console.error('❌ Upload/Analysis failed:', error);
-        res.json({ success: false, error: error.message });
+  try {
+    if (!req.file) {
+      return res.json({ success: false, error: 'No file uploaded' });
     }
+
+    console.log('📁 File uploaded:', req.file.filename);
+    console.log('🔍 Original name:', req.file.originalname);
+
+    const imagePath = req.file.path;
+    const imageData = {
+      id: Date.now().toString(),
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      uploadDate: new Date().toISOString(),
+      analysis: null
+    };
+
+    // Perform AI analysis
+    console.log('🤖 Starting AI analysis...');
+    const analysis = await analyzeImageWithAI(imagePath);
+    imageData.analysis = analysis;
+
+    // Save to local JSON database
+    const db = await loadDatabase();
+    db.images.push(imageData);
+    await saveDatabase(db);
+
+    console.log('✅ Image saved with AI analysis!');
+    console.log(`🎯 Category: ${analysis.category}`);
+    console.log(`🏷️ Tags: ${analysis.tags.join(', ')}`);
+    console.log(`✍️ Caption: ${analysis.caption}`);
+
+    res.json({
+      success: true,
+      message: `AI Analysis Complete! Category: ${analysis.category} | Tags: ${analysis.tags.join(', ')}`,
+      imageData: imageData
+    });
+  } catch (error) {
+    console.error('❌ Upload/Analysis failed:', error);
+    res.json({ success: false, error: error.message });
+  }
 });
 
 app.get('/api/images', async (req, res) => {
-    try {
-        const db = await loadDatabase();
-        res.json(db);
-    } catch (error) {
-        res.json({ images: [] });
-    }
+  try {
+    const db = await loadDatabase();
+    res.json(db);
+  } catch (error) {
+    res.json({ images: [] });
+  }
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 AI Image Organizer running on http://localhost:${PORT}`);
-    console.log(`🤖 OpenAI GPT-4 Vision: ${process.env.OPENAI_API_KEY ? '✅ Ready!' : '❌ Missing API Key!'}`);
-    console.log('💾 Using local JSON storage');
-    console.log('🎯 Ready to analyze images with AI!');
+  console.log(`🚀 AI Image Organizer running on http://localhost:${PORT}`);
+  console.log(
+    `🤖 OpenAI GPT-4 Vision: ${process.env.OPENAI_API_KEY ? '✅ Ready!' : '❌ Missing API Key!'}`
+  );
+  console.log('💾 Using local JSON storage');
+  console.log('🎯 Ready to analyze images with AI!');
 });

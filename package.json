@@ -11,7 +11,12 @@
     "frontend:install": "cd frontend && npm install",
     "install-all": "npm install && npm run frontend:install",
     "dev-all": "concurrently \"npm run dev\" \"npm run frontend\"",
-    "test": "echo \"See TESTING_GUIDE.md for testing instructions\" && exit 0"
+    "test": "echo \"See TESTING_GUIDE.md for testing instructions\" && exit 0",
+    "lint": "eslint backend/**/*.js --fix",
+    "lint:check": "eslint backend/**/*.js",
+    "format": "prettier --write \"backend/**/*.js\" \"*.js\"",
+    "format:check": "prettier --check \"backend/**/*.js\" \"*.js\"",
+    "test:backend": "node backend/test-db.js"
   },
   "keywords": [
     "ocr",
@@ -40,7 +45,9 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9"
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.2.5"
   },
   "engines": {
     "node": ">=18.0.0"

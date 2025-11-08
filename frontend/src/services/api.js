@@ -119,10 +119,14 @@ export const reportsAPI = {
   },
 
   batchUpload: async (formData) => {
+    // Add timeout for batch upload (5 minutes for large batches)
+    const timeoutMs = 5 * 60 * 1000; // 5 minutes
+    
     const response = await api.post('/reports/batch-upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: timeoutMs, // 5 minute timeout
     });
     return response.data;
   },

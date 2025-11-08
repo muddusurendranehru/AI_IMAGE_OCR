@@ -8,31 +8,42 @@ const { authenticateToken } = require('../middleware/auth');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // Use absolute path relative to project root
-        cb(null, path.join(__dirname, '../../uploads/'));
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
-        cb(null, uniqueName);
-    }
+  destination: (req, file, cb) => {
+    // Use absolute path relative to project root
+    cb(null, path.join(__dirname, '../../uploads/'));
+  },
+  filename: (req, file, cb) => {
+    const uniqueName =
+      Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
 });
 
 const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        // Accept images and PDFs
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-        
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            return cb(new Error('Only image files (JPG, PNG, GIF, WEBP) and PDF files are allowed!'), false);
-        }
-    },
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10 MB limit
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    // Accept images and PDFs
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf'
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      return cb(
+        new Error('Only image files (JPG, PNG, GIF, WEBP) and PDF files are allowed!'),
+        false
+      );
     }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB limit
+  }
 });
 
 // All routes require authentication
@@ -47,23 +58,34 @@ router.put('/:id', labReportController.updateReport);
 router.delete('/:id', labReportController.deleteReport);
 // Batch upload configuration
 const uploadMultiple = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            return cb(new Error('Only image and PDF files allowed!'), false);
-        }
-    },
-    limits: { fileSize: 10 * 1024 * 1024 }
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      return cb(new Error('Only image and PDF files allowed!'), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 // Batch upload route - multiple files for one patient
-router.post('/batch-upload', uploadMultiple.array('images', 10), labReportController.batchUploadLabReports);
+// Increased limit to 30 files to handle large batches
+router.post(
+  '/batch-upload',
+  uploadMultiple.array('images', 30),
+  labReportController.batchUploadLabReports
+);
 
 // Finalize report with human-verified data
 router.post('/:id/finalize', labReportController.finalizeReport);
 
 module.exports = router;
-
