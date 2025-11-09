@@ -1,9 +1,11 @@
 /* Print-Ready Report Styles */
 
 @media print {
-  /* Hide navigation and UI elements */
+  /* Hide EVERYTHING except speedometer rings */
+  .modal-header,
   .modal-header button,
   .btn-close,
+  .btn-print,
   .report-actions,
   .pagination,
   nav,
@@ -11,41 +13,71 @@
   .dashboard-header,
   .search-bar,
   .batch-actions,
-  .modal-overlay {
+  .modal-overlay,
+  .modal-page-nav,
+  .page-nav-btn,
+  .speedometer-intro,
+  .homa-iq-section,
+  .detail-section,
+  .lab-values-table,
+  .recommendations,
+  .contact-print,
+  .score-summary-print,
+  .modal-body > *:not(.speedometer-page),
+  .speedometer-page > *:not(.speedometers-grid) {
     display: none !important;
+  }
+
+  /* Show ONLY speedometer rings */
+  .speedometers-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 30px !important;
+    padding: 40px !important;
+    page-break-inside: avoid !important;
   }
 
   /* Full width for content */
   .modal-content,
-  .report-details {
+  .report-details,
+  .speedometer-page {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
+    background: white !important;
   }
 
-  /* Page breaks */
-  .detail-section {
-    page-break-inside: avoid;
+  /* Show print-only header and footer */
+  .print-header,
+  .print-footer,
+  .patient-info-print {
+    display: block !important;
   }
 
-  .homa-iq-section {
-    page-break-after: avoid;
+  /* Speedometer rings - ensure colors print */
+  .speedometer-gauge {
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Colors for print */
-  .homa-iq-score-large {
-    border: 3px solid #333 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* Ensure colors print */
+  /* Ensure ALL colors print (critical for speedometer rings) */
   * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* SVG colors must print */
+  svg,
+  svg path,
+  svg circle,
+  svg line,
+  svg text {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Font sizes for print */

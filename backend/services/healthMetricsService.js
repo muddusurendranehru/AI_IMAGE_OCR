@@ -20,32 +20,43 @@ function calculateHomaIR(glucose, insulin) {
   const homaIR = (glucose * insulin) / 405;
 
   // Determine color zone and status based on actual HOMA-IR value
-  // Updated thresholds: 2-5 orange, 5-10 red, >10 deep red
+  // User-specified thresholds:
+  // 1-2: GREEN, 2-6: ORANGE, 6-8: YELLOW RED, 8-12: YELLOW DARK RED, 12-20: REDDISH BLUE, Above 20: FULL RED
   let colorZone = 'green';
   let status = 'Excellent';
   let riskLevel = 'Low';
   let normalizedValue = 0;
 
-  if (homaIR >= 10) {
-    colorZone = 'darkred';
-    status = 'Very High Risk';
+  if (homaIR >= 20) {
+    colorZone = 'darkred'; // FULL RED
+    status = 'Severe Risk';
     riskLevel = 'Very High';
     normalizedValue = 100; // Maximum risk
-  } else if (homaIR >= 5) {
-    colorZone = 'red';
+  } else if (homaIR >= 12) {
+    colorZone = 'reddishblue'; // REDDISH BLUE
+    status = 'Very High Risk';
+    riskLevel = 'Very High';
+    normalizedValue = 80 + ((homaIR - 12) / 8) * 20; // 80-100
+  } else if (homaIR >= 8) {
+    colorZone = 'yellowdarkred'; // YELLOW DARK RED
     status = 'High Risk';
     riskLevel = 'High';
-    normalizedValue = Math.min(50 + ((homaIR - 5) / 5) * 50, 100); // 50-100
+    normalizedValue = 60 + ((homaIR - 8) / 4) * 20; // 60-80
+  } else if (homaIR >= 6) {
+    colorZone = 'yellowred'; // YELLOW RED
+    status = 'Borderline High';
+    riskLevel = 'Moderate';
+    normalizedValue = 40 + ((homaIR - 6) / 2) * 20; // 40-60
   } else if (homaIR >= 2) {
-    colorZone = 'orange';
+    colorZone = 'orange'; // ORANGE
     status = 'Moderate Risk';
     riskLevel = 'Moderate';
-    normalizedValue = 20 + ((homaIR - 2) / 3) * 30; // 20-50
+    normalizedValue = 20 + ((homaIR - 2) / 4) * 20; // 20-40
   } else if (homaIR >= 1) {
-    colorZone = 'yellow';
-    status = 'Borderline';
-    riskLevel = 'Borderline';
-    normalizedValue = homaIR * 20; // 0-20
+    colorZone = 'green'; // GREEN
+    status = 'Excellent';
+    riskLevel = 'Low';
+    normalizedValue = (homaIR - 1) * 20; // 0-20
   } else {
     colorZone = 'green';
     status = 'Excellent';
@@ -92,43 +103,50 @@ function calculateTYGIndex(triglycerides, glucose) {
 
   const tygIndex = Math.log((triglycerides * glucose) / 2);
 
-  // Normalize TYG index (typically 8-10) to 0-100 scale
-  // TYG < 8.5 = Low risk, 8.5-9.0 = Moderate, >9.0 = High risk
+  // Normalize TYG index to 0-100 scale
+  // User-specified thresholds:
+  // 4.5: NORMAL GREEN, 5-8: ORANGE, 8-10: YELLOW RED, 10-14: REDDISH YELLOW, Above 15: RED, DARK RED
   let normalizedValue = 0;
   let colorZone = 'green';
   let status = 'Excellent';
   let riskLevel = 'Low';
 
-  if (tygIndex < 8.5) {
-    // 0-20 zone (green)
-    normalizedValue = (tygIndex - 7.5) * 20; // Maps 7.5-8.5 to 0-20
-    colorZone = 'green';
-    status = 'Excellent';
-    riskLevel = 'Low';
-  } else if (tygIndex < 9.0) {
-    // 20-40 zone (yellow)
-    normalizedValue = 20 + (tygIndex - 8.5) * 40; // Maps 8.5-9.0 to 20-40
-    colorZone = 'yellow';
-    status = 'Borderline';
-    riskLevel = 'Borderline';
-  } else if (tygIndex < 9.5) {
-    // 40-60 zone (orange)
-    normalizedValue = 40 + (tygIndex - 9.0) * 40; // Maps 9.0-9.5 to 40-60
-    colorZone = 'orange';
-    status = 'Moderate Risk';
-    riskLevel = 'Moderate';
-  } else if (tygIndex < 10.0) {
-    // 60-80 zone (red)
-    normalizedValue = 60 + (tygIndex - 9.5) * 40; // Maps 9.5-10.0 to 60-80
-    colorZone = 'red';
-    status = 'High Risk';
-    riskLevel = 'High';
-  } else {
-    // 80-100 zone (dark red)
-    normalizedValue = 80 + Math.min((tygIndex - 10.0) * 20, 20); // Maps 10.0+ to 80-100
+  if (tygIndex >= 15) {
+    // Above 15: RED, DARK RED
     colorZone = 'darkred';
     status = 'Very High Risk';
     riskLevel = 'Very High';
+    normalizedValue = 90 + Math.min((tygIndex - 15) * 2, 10); // 90-100
+  } else if (tygIndex >= 10) {
+    // 10-14: REDDISH YELLOW
+    colorZone = 'reddishyellow';
+    status = 'High Risk';
+    riskLevel = 'High';
+    normalizedValue = 60 + ((tygIndex - 10) / 4) * 30; // 60-90
+  } else if (tygIndex >= 8) {
+    // 8-10: YELLOW RED
+    colorZone = 'yellowred';
+    status = 'Borderline High';
+    riskLevel = 'Moderate';
+    normalizedValue = 40 + ((tygIndex - 8) / 2) * 20; // 40-60
+  } else if (tygIndex >= 5) {
+    // 5-8: ORANGE
+    colorZone = 'orange';
+    status = 'Moderate Risk';
+    riskLevel = 'Moderate';
+    normalizedValue = 20 + ((tygIndex - 5) / 3) * 20; // 20-40
+  } else if (tygIndex >= 4.5) {
+    // 4.5: NORMAL GREEN
+    colorZone = 'green';
+    status = 'Normal';
+    riskLevel = 'Low';
+    normalizedValue = (tygIndex - 4.5) * 40; // 0-20
+  } else {
+    // Below 4.5: GREEN
+    colorZone = 'green';
+    status = 'Excellent';
+    riskLevel = 'Low';
+    normalizedValue = 0;
   }
 
   return {
@@ -270,48 +288,50 @@ function calculateWaistCircumference(waistCm) {
   let status = 'Excellent';
   let riskLevel = 'Low';
 
-  if (waistCm < 85) {
-    // 0-20 zone (green) - Good
-    normalizedValue = (waistCm / 85) * 20;
-    colorZone = 'green';
-    status = 'Good';
-    riskLevel = 'Low';
-  } else if (waistCm < 90) {
-    // 20-30 zone (greenish yellow) - Borderline
-    normalizedValue = 20 + ((waistCm - 85) / (90 - 85)) * 10;
-    colorZone = 'greenishyellow';
-    status = 'Borderline';
-    riskLevel = 'Borderline';
-  } else if (waistCm < 95) {
-    // 30-40 zone (yellow) - Moderate
-    normalizedValue = 30 + ((waistCm - 90) / (95 - 90)) * 10;
-    colorZone = 'yellow';
-    status = 'Moderate Risk';
-    riskLevel = 'Moderate';
-  } else if (waistCm < 100) {
-    // 40-55 zone (orange) - Increased risk
-    normalizedValue = 40 + ((waistCm - 95) / (100 - 95)) * 15;
-    colorZone = 'orange';
-    status = 'Increased Risk';
-    riskLevel = 'Moderate';
-  } else if (waistCm < 110) {
-    // 55-75 zone (red) - High risk
-    normalizedValue = 55 + ((waistCm - 100) / (110 - 100)) * 20;
-    colorZone = 'red';
-    status = 'High Risk';
-    riskLevel = 'High';
-  } else if (waistCm < 120) {
-    // 75-90 zone (red) - Very high risk
-    normalizedValue = 75 + ((waistCm - 110) / (120 - 110)) * 15;
-    colorZone = 'red';
-    status = 'Very High Risk';
-    riskLevel = 'Very High';
-  } else {
-    // 90-100 zone (dark red) - Extremely high risk
+  // User-specified thresholds:
+  // 85 cm: GREEN, 85-90: BLUE, 90-95: YELLOW RED, 95-100: ORANGE RED, 100-110: REDDISH YELLOW, 110-120: RED, Above 120: DARK RED
+  if (waistCm >= 120) {
+    // Above 120: DARK RED
     normalizedValue = 90 + Math.min(((waistCm - 120) / 20) * 10, 10);
     colorZone = 'darkred';
     status = 'Extremely High Risk';
     riskLevel = 'Very High';
+  } else if (waistCm >= 110) {
+    // 110-120: RED
+    normalizedValue = 75 + ((waistCm - 110) / 10) * 15;
+    colorZone = 'red';
+    status = 'Very High Risk';
+    riskLevel = 'Very High';
+  } else if (waistCm >= 100) {
+    // 100-110: REDDISH YELLOW
+    normalizedValue = 60 + ((waistCm - 100) / 10) * 15;
+    colorZone = 'reddishyellow';
+    status = 'High Risk';
+    riskLevel = 'High';
+  } else if (waistCm >= 95) {
+    // 95-100: ORANGE RED
+    normalizedValue = 40 + ((waistCm - 95) / 5) * 20;
+    colorZone = 'orangered';
+    status = 'Increased Risk';
+    riskLevel = 'Moderate';
+  } else if (waistCm >= 90) {
+    // 90-95: YELLOW RED
+    normalizedValue = 30 + ((waistCm - 90) / 5) * 10;
+    colorZone = 'yellowred';
+    status = 'Moderate Risk';
+    riskLevel = 'Moderate';
+  } else if (waistCm >= 85) {
+    // 85-90: BLUE
+    normalizedValue = 20 + ((waistCm - 85) / 5) * 10;
+    colorZone = 'blue';
+    status = 'Borderline';
+    riskLevel = 'Borderline';
+  } else {
+    // 85 cm: GREEN
+    normalizedValue = (waistCm / 85) * 20;
+    colorZone = 'green';
+    status = 'Good';
+    riskLevel = 'Low';
   }
 
   // Convert to inches for display
@@ -386,12 +406,18 @@ function calculateAllHealthMetrics(labValues, patientData = {}) {
  */
 function getZoneColor(zone) {
   const colors = {
-    green: '#10b981',
-    greenishyellow: '#84cc16',
-    yellow: '#fbbf24',
-    orange: '#f97316',
-    red: '#ef4444',
-    darkred: '#991b1b'
+    green: '#10b981',           // Green
+    blue: '#3b82f6',            // Blue
+    greenishyellow: '#84cc16',  // Greenish Yellow
+    yellow: '#fbbf24',          // Yellow
+    yellowred: '#f59e0b',       // Yellow Red
+    yellowdarkred: '#dc2626',   // Yellow Dark Red
+    orange: '#f97316',          // Orange
+    orangered: '#ea580c',       // Orange Red
+    reddishyellow: '#ef4444',   // Reddish Yellow
+    reddishblue: '#7c3aed',     // Reddish Blue
+    red: '#ef4444',             // Red
+    darkred: '#991b1b'          // Dark Red / Full Red
   };
   return colors[zone] || '#6b7280';
 }
