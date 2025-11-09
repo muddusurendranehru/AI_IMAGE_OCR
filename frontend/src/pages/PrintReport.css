@@ -1,7 +1,7 @@
 /* Print-Ready Report Styles */
 
 @media print {
-  /* Hide EVERYTHING except speedometer rings */
+  /* Hide EVERYTHING except speedometer rings and selected patient report */
   .modal-header,
   .modal-header button,
   .btn-close,
@@ -24,7 +24,15 @@
   .contact-print,
   .score-summary-print,
   .modal-body > *:not(.speedometer-page),
-  .speedometer-page > *:not(.speedometers-grid) {
+  .speedometer-page > *:not(.speedometers-grid),
+  /* Hide reports list and dashboard content */
+  .dashboard-main > *:not(.modal-overlay),
+  .reports-grid,
+  .reports-list,
+  .upload-section,
+  .search-section,
+  .card:not(.modal-content),
+  .dashboard > *:not(.modal-overlay) {
     display: none !important;
   }
 
@@ -37,7 +45,7 @@
     page-break-inside: avoid !important;
   }
 
-  /* Full width for content */
+  /* Full width for content - Only show modal content */
   .modal-content,
   .report-details,
   .speedometer-page {
@@ -48,6 +56,25 @@
     box-shadow: none !important;
     border: none !important;
     background: white !important;
+    position: relative !important;
+  }
+
+  /* Ensure only modal content is visible - Hide dashboard and reports list */
+  body > *:not(.modal-overlay):not(script):not(style),
+  .dashboard > *:not(.modal-overlay),
+  .dashboard-main,
+  .reports-section,
+  .reports-grid {
+    display: none !important;
+  }
+
+  /* Show modal overlay and content */
+  .modal-overlay {
+    position: static !important;
+    background: white !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
   }
 
   /* Show print-only header and footer */
