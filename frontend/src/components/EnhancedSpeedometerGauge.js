@@ -26,25 +26,31 @@ const EnhancedSpeedometerGauge = ({ metric, title, subtitle }) => {
 
   const { value, normalizedValue, colorZone, status, riskLevel, unit, interpretation } = metric;
 
-  // Get zone colors
+  // Get zone colors - Updated with brighter reds
   const zoneColors = {
     green: '#10b981',
     greenishyellow: '#84cc16',
     yellow: '#fbbf24',
     orange: '#f97316',
-    red: '#ef4444',
-    darkred: '#991b1b'
+    orangered: '#ff4500',
+    yellowred: '#ff6b35',        // Bright orange-red
+    yellowdarkred: '#ff3333',     // Bright red (was dark)
+    reddishyellow: '#ff4444',     // Bright red-yellow
+    reddishblue: '#dc2626',       // Bright red (not blue)
+    red: '#ef4444',               // Standard red
+    darkred: '#dc2626',           // Bright red instead of dark brown (#991b1b)
+    blue: '#3b82f6'               // Blue for waist circumference
   };
 
   const currentColor = zoneColors[colorZone] || '#6b7280';
 
-  // Define color stops for gradient arc
+  // Define color stops for gradient arc - Updated with brighter reds
   const getArcColor = (value) => {
     if (value < 20) return zoneColors.green;
     if (value < 40) return zoneColors.yellow;
     if (value < 60) return zoneColors.orange;
     if (value < 80) return zoneColors.red;
-    return zoneColors.darkred;
+    return zoneColors.darkred; // Now bright red instead of dark brown
   };
 
   return (

@@ -43,27 +43,33 @@ const SpeedometerGauge = ({ metric, title, subtitle }) => {
     return `M ${startPoint.x} ${startPoint.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`;
   };
 
-  // Define color zones
+  // Define color zones - Updated with brighter reds
   const zones = [
-    { start: -135, end: -81, color: '#10b981', label: 'Good' },           // 0-20
-    { start: -81, end: -27, color: '#fbbf24', label: 'Borderline' },      // 20-40
-    { start: -27, end: 27, color: '#f97316', label: 'Moderate' },         // 40-60
-    { start: 27, end: 81, color: '#ef4444', label: 'High' },              // 60-80
-    { start: 81, end: 135, color: '#991b1b', label: 'Very High' }         // 80-100
+    { start: -135, end: -81, color: '#10b981', label: 'Good' },           // 0-20 (Green)
+    { start: -81, end: -27, color: '#fbbf24', label: 'Borderline' },      // 20-40 (Yellow)
+    { start: -27, end: 27, color: '#f97316', label: 'Moderate' },         // 40-60 (Orange)
+    { start: 27, end: 81, color: '#ef4444', label: 'High' },              // 60-80 (Red)
+    { start: 81, end: 135, color: '#dc2626', label: 'Very High' }         // 80-100 (Bright Red instead of dark)
   ];
 
   // Calculate needle angle based on normalized value (0-100)
   const needleAngle = startAngle + (normalizedValue / 100) * totalAngle;
   const needleEnd = polarToCartesian(needleAngle);
 
-  // Get current zone color
+  // Get current zone color - Updated with brighter reds
   const zoneColors = {
     green: '#10b981',
     greenishyellow: '#84cc16',
     yellow: '#fbbf24',
     orange: '#f97316',
-    red: '#ef4444',
-    darkred: '#991b1b'
+    orangered: '#ff4500',
+    yellowred: '#ff6b35',        // Bright orange-red
+    yellowdarkred: '#ff3333',     // Bright red (was dark)
+    reddishyellow: '#ff4444',     // Bright red-yellow
+    reddishblue: '#dc2626',       // Bright red (not blue)
+    red: '#ef4444',               // Standard red
+    darkred: '#dc2626',           // Bright red instead of dark brown (#991b1b)
+    blue: '#3b82f6'               // Blue for waist circumference
   };
 
   const currentColor = zoneColors[colorZone] || '#6b7280';
@@ -177,7 +183,7 @@ const SpeedometerGauge = ({ metric, title, subtitle }) => {
           <span style={{ color: '#10b981' }}>●</span> Good
         </div>
         <div className="zone-label zone-end">
-          <span style={{ color: '#991b1b' }}>●</span> Critical
+          <span style={{ color: '#dc2626' }}>●</span> Critical
         </div>
       </div>
     </div>
