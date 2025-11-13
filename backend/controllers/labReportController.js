@@ -6,6 +6,7 @@ const healthMetricsService = require('../services/healthMetricsService');
 const drNehruScoringSystem = require('../services/drNehruScoringSystem');
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto'); // For generating UUIDs
 
 /**
  * Upload and process lab report
@@ -602,9 +603,9 @@ const batchUploadLabReports = async (req, res) => {
       console.log(`✅ Batch upload complete! Report ID: ${savedReport.id}`);
     } catch (dbError) {
       console.error('⚠️ Database save failed, but returning OCR results:', dbError.message);
-      // Create a mock report object if DB save fails
+      // Create a mock report object if DB save fails - use proper UUID format
       savedReport = {
-        id: `temp-${Date.now()}`,
+        id: crypto.randomUUID(), // Generate proper UUID instead of temp-{timestamp}
         patient_id: patientId,
         patient_name: patientName,
         report_type: `Batch (${files.length} files)`,
@@ -763,24 +764,51 @@ const finalizeReport = async (req, res) => {
       verifiedAt: new Date().toISOString()
     };
 
-    const result = await db.query(
-      `UPDATE lab_reports 
-            SET extracted_data = $1, 
-                patient_name = $2,
-                patient_id = $3,
-                processed_at = NOW()
-            WHERE id = $4
-            RETURNING *`,
-      [
-        JSON.stringify(updatedExtractedData),
-        confirmedData.patientName,
-        confirmedData.patientId,
-        reportId
-      ]
-    );
+    // Check if report exists in database first
+    const checkResult = await db.query('SELECT id FROM lab_reports WHERE id = $1', [reportId]);
+    
+    let result;
+    if (checkResult.rows.length > 0) {
+      // Report exists - UPDATE it
+      result = await db.query(
+        `UPDATE lab_reports 
+              SET extracted_data = $1, 
+                  patient_name = $2,
+                  patient_id = $3,
+                  processed_at = NOW()
+              WHERE id = $4
+              RETURNING *`,
+        [
+          JSON.stringify(updatedExtractedData),
+          confirmedData.patientName,
+          confirmedData.patientId,
+          reportId
+        ]
+      );
+    } else {
+      // Report doesn't exist (temp report) - INSERT it
+      console.log('⚠️ Report not in DB (temp report), inserting new record...');
+      result = await db.query(
+        `INSERT INTO lab_reports 
+              (id, uploaded_by, patient_name, patient_id, report_type, ocr_text, extracted_data, image_path, status, processed_at, uploaded_at, created_at)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
+              RETURNING *`,
+        [
+          reportId,
+          req.user.userId,
+          confirmedData.patientName,
+          confirmedData.patientId,
+          'Batch Upload',
+          '', // No OCR text for temp reports
+          JSON.stringify(updatedExtractedData),
+          '', // No image path for batch uploads
+          'completed' // Set status to completed
+        ]
+      );
+    }
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Report not found' });
+      return res.status(500).json({ success: false, error: 'Failed to save report' });
     }
 
     console.log('✅ Report finalized successfully');
