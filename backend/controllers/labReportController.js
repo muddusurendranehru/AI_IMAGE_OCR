@@ -648,11 +648,12 @@ const batchUploadLabReports = async (req, res) => {
  * Takes user-confirmed lab values and calculates health metrics
  */
 const finalizeReport = async (req, res) => {
-  try {
-    const reportId = req.params.id;
-    const confirmedData = req.body;
+    try {
+        const reportId = req.params.id;
+        const confirmedData = req.body;
 
-    console.log(`📝 Finalizing report ${reportId} with human-verified data`);
+        console.log(`📝 Finalizing report ${reportId} with human-verified data`);
+        console.log('📦 Received confirmed data:', JSON.stringify(confirmedData, null, 2));
 
     // Convert form data to labValues format
     const labValues = {
@@ -789,10 +790,20 @@ const finalizeReport = async (req, res) => {
       report: result.rows[0],
       message: 'Report finalized with verified data'
     });
-  } catch (error) {
-    console.error('❌ Error finalizing report:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+    } catch (error) {
+        console.error('❌ Error finalizing report:', error);
+        console.error('❌ Error stack:', error.stack);
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code
+        });
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
 
 module.exports = {
