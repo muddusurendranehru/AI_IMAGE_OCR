@@ -3,6 +3,24 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Log error with full details for Render/debugging (no passwords)
+function logAuthError(operation, error, context = {}) {
+  const safeContext = { ...context };
+  if (safeContext.password) delete safeContext.password;
+  if (safeContext.confirmPassword) delete safeContext.confirmPassword;
+  console.error(`❌ [AUTH] ${operation} error:`, {
+    message: error?.message,
+    name: error?.name,
+    code: error?.code,
+    stack: error?.stack || '(no stack)',
+    context: safeContext,
+    hasJwtSecret: Boolean(process.env.JWT_SECRET),
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+  });
+}
+
 // Sign Up - Create new user
 const signup = async (req, res) => {
   try {
@@ -93,18 +111,23 @@ const signup = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Signup error:', error);
+    logAuthError('Signup', error, { email: req.body?.email });
+    const message = isDev ? (error?.message || String(error)) : 'Server error during signup.';
     res.status(500).json({
       success: false,
-      error: 'Server error during signup.'
+      error: message,
+      ...(isDev && { hint: error?.code === 'ECONNREFUSED' ? 'Database unreachable. Check DATABASE_URL.' : error?.code === 'ENOTFOUND' ? 'Database host not found.' : undefined }),
     });
   }
 };
 
 // Login - Authenticate user
 const login = async (req, res) => {
+  const requestId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+
+    console.log(`[AUTH] Login attempt ${requestId}`, { email: email ? `${email.slice(0, 3)}***` : '(missing)', hasPassword: Boolean(password), bodyKeys: req.body ? Object.keys(req.body) : [] });
 
     // Validation
     if (!email || !password) {
@@ -114,11 +137,31 @@ const login = async (req, res) => {
       });
     }
 
+    // Fail fast if JWT_SECRET is missing (prevents cryptic 500)
+    if (!process.env.JWT_SECRET) {
+      logAuthError('Login', new Error('JWT_SECRET is not set'), { email });
+      return res.status(500).json({
+        success: false,
+        error: isDev ? 'Server misconfiguration: JWT_SECRET is not set. Set it in Render Environment.' : 'Server error during login.',
+      });
+    }
+
     // Find user
-    const result = await db.query(
-      'SELECT id, email, password_hash, full_name, role FROM users WHERE email = $1',
-      [email.toLowerCase()]
-    );
+    let result;
+    try {
+      result = await db.query(
+        'SELECT id, email, password_hash, full_name, role FROM users WHERE email = $1',
+        [email.toLowerCase()]
+      );
+    } catch (dbError) {
+      logAuthError('Login (DB query)', dbError, { email });
+      const message = isDev ? (dbError?.message || String(dbError)) : 'Server error during login.';
+      return res.status(500).json({
+        success: false,
+        error: message,
+        ...(isDev && { hint: !process.env.DATABASE_URL ? 'DATABASE_URL is not set in Render.' : 'Check DATABASE_URL and Neon connectivity.' }),
+      });
+    }
 
     if (result.rows.length === 0) {
       return res.status(401).json({
@@ -139,7 +182,7 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT token
+    // Generate JWT token (JWT_SECRET already checked above)
     const token = jwt.sign(
       {
         userId: user.id,
@@ -150,7 +193,7 @@ const login = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    console.log('✅ User logged in:', user.email);
+    console.log(`✅ [AUTH] Login success ${requestId}:`, user.email);
 
     res.json({
       success: true,
@@ -164,10 +207,17 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Login error:', error);
+    logAuthError('Login', error, { email: req.body?.email, requestId });
+    const message = isDev ? (error?.message || String(error)) : 'Server error during login.';
     res.status(500).json({
       success: false,
-      error: 'Server error during login.'
+      error: message,
+      ...(isDev && {
+        hint: !process.env.JWT_SECRET ? 'Set JWT_SECRET in Render.'
+          : !process.env.DATABASE_URL ? 'Set DATABASE_URL in Render.'
+          : error?.code === 'ECONNREFUSED' ? 'Database unreachable.'
+          : undefined,
+      }),
     });
   }
 };

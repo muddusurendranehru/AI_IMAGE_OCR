@@ -75,13 +75,40 @@ ensureDirectories();
 // ROUTES
 // =====================================================
 
-// Health check route (no database required)
+// Health check route (no database required) - for Render default health check
 app.get('/health', (req, res) => {
   res.json({
     success: true,
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
+  });
+});
+
+// API health check - database + env (for debugging 500s on Render)
+app.get('/api/health', async (req, res) => {
+  const env = {
+    NODE_ENV: process.env.NODE_ENV || '(not set)',
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    hasJwtSecret: Boolean(process.env.JWT_SECRET),
+    port: process.env.PORT || 3008,
+  };
+  let dbOk = false;
+  let dbError = null;
+  try {
+    dbOk = await db.testConnection();
+  } catch (err) {
+    dbError = err?.message || String(err);
+    console.error('[/api/health] DB check failed:', dbError);
+  }
+  const ok = env.hasDatabaseUrl && env.hasJwtSecret && dbOk;
+  res.status(ok ? 200 : 503).json({
+    success: ok,
+    status: ok ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    env,
+    database: { connected: dbOk, error: dbError || undefined },
   });
 });
 
@@ -187,6 +214,7 @@ const startServer = async () => {
       );
       console.log('\n📚 API Endpoints:');
       console.log('   GET    /health              - Health check (no DB)');
+      console.log('   GET    /api/health          - Health + DB + env (debug)');
       console.log('   GET    /                    - API info');
       console.log('   GET    /api/status           - Full status');
       console.log('   POST   /api/auth/signup      - Register new user');
@@ -201,10 +229,21 @@ const startServer = async () => {
       console.log('   GET    /api/reports/search   - Search reports');
       console.log('='.repeat(50) + '\n');
 
+      // Log env status for Render debugging (no secrets)
+      const envCheck = {
+        DATABASE_URL: !!process.env.DATABASE_URL,
+        JWT_SECRET: !!process.env.JWT_SECRET,
+        NODE_ENV: process.env.NODE_ENV || '(not set)',
+      };
+      console.log('🔐 Environment (Render):', envCheck);
+      if (!envCheck.JWT_SECRET) console.warn('⚠️ JWT_SECRET is NOT set — login/signup will return 500. Set it in Render Dashboard → Environment.');
+      if (!envCheck.DATABASE_URL) console.warn('⚠️ DATABASE_URL is NOT set — DB operations will fail. Set it in Render Dashboard → Environment.');
+
       // Test database connection in background (non-blocking)
       console.log('🔌 Testing database connection in background...');
       db.testConnection().catch((err) => {
         console.warn('⚠️ Database connection test failed, but server is running');
+        console.warn('   Error:', err?.message || err);
         console.warn('   Database will retry on first request');
       });
     });
