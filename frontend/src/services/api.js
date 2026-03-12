@@ -1,52 +1,99 @@
-// API Service for Backend Communication
+// frontend/src/services/api.js
+// ✅ Safe, production-ready API client
+// ✅ Fixes localhost PDF loading issue (getFileUrl)
+// ✅ Won't break your working backend/auth
+
 import axios from 'axios';
 
-// Base URL for API
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3008/api';
+// 🔐 Safe API URL configuration
+// Uses env var if set, otherwise falls back to production URL
+// NEVER uses localhost in production builds
+const getApiBaseUrl = () => {
+  const envUrl = process.env.REACT_APP_API_URL;
+  const productionUrl = 'https://ai-image-ocr-5ejd.onrender.com/api';
+  const devUrl = 'http://localhost:3008/api';
 
-// Create axios instance
+  if (envUrl) return envUrl;
+  if (process.env.NODE_ENV === 'production') return productionUrl;
+  return devUrl;
+};
+
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000,
 });
 
-// Request interceptor to add auth token
+// 🔐 Request Interceptor: Add JWT token to protected requests
 api.interceptors.request.use(
   (config) => {
-    // Don't add auth token for signup/login endpoints
-    const isAuthEndpoint = config.url?.includes('/auth/signup') || config.url?.includes('/auth/login');
-    
-    if (!isAuthEndpoint) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = localStorage.getItem('token');
+    const publicRoutes = ['/auth/login', '/auth/signup', '/health', '/api/health'];
+    const isPublic = publicRoutes.some((route) => config.url?.includes(route));
+
+    if (token && !isPublic) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
+
     return config;
   },
   (error) => {
+    console.error('❌ Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor to handle errors
+// 🔐 Response Interceptor: Handle auth errors globally
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      console.warn('⚠️ Auth error: Token invalid or expired');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
+
+    if (error.response?.status === 403) {
+      console.warn('⚠️ Access forbidden: Insufficient permissions');
+    }
+
+    if (error.response?.status === 404) {
+      console.warn(`⚠️ Endpoint not found: ${error.config?.url}`);
+    }
+
+    if (!error.response) {
+      console.error('🌐 Network error: Check connection or CORS settings');
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.error('❌ API Error:', {
+        message: error.message,
+        url: error.config?.url,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    }
+
     return Promise.reject(error);
   }
 );
 
 // =====================================================
-// AUTH API
+// AUTH API (same signatures & return .data for Login/Signup/Dashboard)
 // =====================================================
 
 export const authAPI = {
@@ -61,10 +108,7 @@ export const authAPI = {
   },
 
   login: async (email, password) => {
-    const response = await api.post('/auth/login', {
-      email,
-      password,
-    });
+    const response = await api.post('/auth/login', { email, password });
     return response.data;
   },
 
@@ -86,20 +130,14 @@ export const authAPI = {
 export const reportsAPI = {
   uploadReport: async (formData) => {
     const response = await api.post('/reports/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   },
 
   getAllReports: async (page = 1, limit = 20, filters = {}) => {
-    const params = new URLSearchParams({
-      page,
-      limit,
-      ...filters,
-    });
-    const response = await api.get(`/reports?${params}`);
+    const params = { page, limit, ...filters };
+    const response = await api.get('/reports', { params });
     return response.data;
   },
 
@@ -119,19 +157,14 @@ export const reportsAPI = {
   },
 
   searchReports: async (query) => {
-    const response = await api.get(`/reports/search?query=${encodeURIComponent(query)}`);
+    const response = await api.get('/reports/search', { params: { query } });
     return response.data;
   },
 
   batchUpload: async (formData) => {
-    // Add timeout for batch upload (5 minutes for large batches)
-    const timeoutMs = 5 * 60 * 1000; // 5 minutes
-    
     const response = await api.post('/reports/batch-upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: timeoutMs, // 5 minute timeout
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000,
     });
     return response.data;
   },
@@ -143,15 +176,52 @@ export const reportsAPI = {
 };
 
 // =====================================================
-// STATUS API
+// STATUS / HEALTH API
 // =====================================================
 
 export const statusAPI = {
   getStatus: async () => {
-    const response = await axios.get(`${API_BASE_URL.replace('/api', '')}/api/status`);
+    const base = getApiBaseUrl().replace('/api', '');
+    const response = await axios.get(`${base}/api/status`);
     return response.data;
   },
 };
 
-export default api;
+export const healthAPI = {
+  checkHealth: () =>
+    api.get('/health', { baseURL: getApiBaseUrl().replace('/api', '') }),
+  checkApiHealth: () =>
+    api.get('/api/health', { baseURL: getApiBaseUrl().replace('/api', '') }),
+};
 
+// =====================================================
+// HELPERS (fixes localhost PDF loading)
+// =====================================================
+
+export const getFileUrl = (filePath) => {
+  if (!filePath) return '';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    return filePath;
+  }
+  if (filePath.startsWith('/uploads/') || filePath.includes('uploads/')) {
+    const baseUrl = getApiBaseUrl().replace('/api', '');
+    return `${baseUrl.replace(/\/$/, '')}/${filePath.replace(/^\//, '')}`;
+  }
+  return filePath;
+};
+
+export const downloadFile = async (url, filename) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(url, {
+    responseType: 'blob',
+    headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+  });
+  const blob = new Blob([response.data]);
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename || 'download';
+  link.click();
+  URL.revokeObjectURL(link.href);
+};
+
+export default api;
