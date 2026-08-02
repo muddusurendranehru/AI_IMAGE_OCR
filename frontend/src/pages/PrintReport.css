@@ -1,42 +1,29 @@
 /* Print-Ready Report Styles */
 
 @media print {
-  /* Hide EVERYTHING except speedometer rings and selected patient report */
-  .modal-header,
-  .modal-header button,
-  .btn-close,
-  .btn-print,
-  .report-actions,
-  .pagination,
-  nav,
-  header,
-  .dashboard-header,
-  .search-bar,
-  .batch-actions,
+  /* Robust print-only technique: hide everything, then show only the modal */
+  body * {
+    visibility: hidden !important;
+  }
   .modal-overlay,
-  .modal-page-nav,
-  .page-nav-btn,
-  .speedometer-intro,
-  .homa-iq-section,
-  .detail-section,
-  .lab-values-table,
-  .recommendations,
-  .contact-print,
-  .score-summary-print,
-  .modal-body > *:not(.speedometer-page),
-  .speedometer-page > *:not(.speedometers-grid),
-  /* Hide reports list and dashboard content */
-  .dashboard-main > *:not(.modal-overlay),
-  .reports-grid,
-  .reports-list,
-  .upload-section,
-  .search-section,
-  .card:not(.modal-content),
-  .dashboard > *:not(.modal-overlay) {
+  .modal-overlay * {
+    visibility: visible !important;
+  }
+  .modal-overlay {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: white !important;
+  }
+  .modal-header button,
+  .btn-print,
+  .btn-close {
+    visibility: hidden !important;
     display: none !important;
   }
 
-  /* Show ONLY speedometer rings */
+/* Show ONLY speedometer rings */
   .speedometers-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
