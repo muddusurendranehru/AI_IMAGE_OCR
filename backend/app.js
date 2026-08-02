@@ -10,6 +10,7 @@ const multer = require('multer');
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const labReportRoutes = require('./routes/labReportRoutes');
+const calculatorRoutes = require('./routes/calculatorRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3008;
@@ -128,6 +129,7 @@ app.get('/api', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', labReportRoutes);
+app.use('/api/calculator', calculatorRoutes);
 
 // Database status endpoint
 app.get('/api/status', async (req, res) => {

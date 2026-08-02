@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HOMA Metabolic Assessment Calculator — Dr. Nehru Method</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --navy: #0D3B5E;
+    --orange: #E85D25;
+    --green: #1a7a4c;
+    --red: #c0392b;
+    --border: #e2e2e2;
+    --bg: #fafafa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 20px;
+    color: #222;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header {
+    text-align: center;
+    border-bottom: 3px solid var(--navy);
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+  }
+  header h1 { color: var(--navy); margin: 0 0 4px; font-size: 26px; }
+  header p { margin: 2px 0; color: #555; font-size: 14px; }
+  .section {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+  }
+  .section h2 {
+    color: var(--navy);
+    font-size: 17px;
+    margin: 0 0 14px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 8px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px 18px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  input, select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .field { margin-bottom: 4px; }
+  .hint { font-size: 11px; color: #888; margin-top: 2px; }
+  button.calc-btn {
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto;
+  }
+  button.calc-btn:hover { background: #d14f1a; }
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .results-table th, .results-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .results-table th { color: #666; font-weight: 600; width: 42%; }
+  .flag {
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    display: inline-block;
+  }
+  .flag-normal { background: #e6f5ea; color: var(--green); }
+  .flag-high { background: #fdeaea; color: var(--red); }
+  .flag-warn { background: #fff4e0; color: #b5750a; }
+  .gauge-wrap { text-align: center; margin: 10px 0; }
+  .gauge-track {
+    height: 22px;
+    border-radius: 11px;
+    background: linear-gradient(to right, #2ecc71 0%, #2ecc71 45%, #f39c12 45%, #f39c12 65%, #c0392b 65%, #c0392b 100%);
+    position: relative;
+    margin: 10px 0;
+  }
+  .gauge-marker {
+    position: absolute;
+    top: -6px;
+    width: 4px;
+    height: 34px;
+    background: #000;
+    border-radius: 2px;
+  }
+  .gauge-labels { display: flex; justify-content: space-between; font-size: 11px; color: #666; }
+  .gauge-track.reversed {
+    background: linear-gradient(to right, #c0392b 0%, #c0392b 58%, #2ecc71 58%, #2ecc71 100%);
+  }
+  .speedo-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .speedo-box { text-align: center; }
+  .speedo-box .speedo-label { font-weight: 700; font-size: 13px; color: var(--navy); margin-bottom: 4px; }
+  .speedo-box .speedo-value { font-weight: 700; font-size: 15px; margin-top: 4px; }
+  .speedo-box .speedo-range { font-size: 10px; color: #888; }
+  .disclaimer {
+    border: 1px solid #f0c0c0;
+    background: #fff6f6;
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--red);
+    line-height: 1.6;
+    margin-top: 20px;
+  }
+  .disclaimer .name {
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 8px;
+    display: block;
+  }
+  .note-box {
+    background: #eef6fb;
+    border: 1px solid #cfe4f2;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #33556e;
+    margin-bottom: 16px;
+  }
+  @media print {
+    button.calc-btn, .no-print { display: none; }
+    body { padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="section" id="loginSection">
+    <h2>Staff Login</h2>
+    <div class="grid">
+      <div class="field"><label>Email</label><input id="staff_email" type="email" placeholder="staff@homahealthcarecenter.in"></div>
+      <div class="field"><label>Password</label><input id="staff_password" type="password"></div>
+    </div>
+    <button class="calc-btn no-print" onclick="staffLogin()" style="margin-top:10px;">Login</button>
+    <div id="loginStatus" style="text-align:center;font-size:13px;margin-top:8px;"></div>
+  </div>
+
+  <div id="mainCalculator" style="display:none;">
+
+  <header>
+    <h1>HOMA Metabolic Assessment Calculator</h1>
+    <p>The Dr. Nehru Method — India-Specific Cutoffs — HOMA Healthcare Center, Hyderabad</p>
+  </header>
+
+  <div class="note-box no-print">
+    Rebuilt tool — please verify all formulas and cutoffs against your original clinical protocol before relying on
+    results for patient care. The "CWR (Dr. Nehru Method)" field below is entered manually since its exact proprietary
+    formula wasn't available to reconstruct automatically.
+  </div>
+
+  <div class="section">
+    <h2>Patient Details</h2>
+    <div class="grid">
+      <div class="field"><label>Full Name</label><input id="p_name" type="text"></div>
+      <div class="field"><label>Age</label><input id="p_age" type="number"></div>
+      <div class="field"><label>Sex</label>
+        <select id="p_sex"><option>Male</option><option>Female</option></select>
+      </div>
+      <div class="field"><label>Registration No.</label><input id="p_reg" type="text"></div>
+      <div class="field"><label>Date</label><input id="p_date" type="date"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Anthropometry</h2>
+    <div class="grid">
+      <div class="field"><label>Height (cm)</label><input id="a_height" type="number" step="0.1"></div>
+      <div class="field"><label>Weight (kg)</label><input id="a_weight" type="number" step="0.1"></div>
+      <div class="field"><label>Waist Circumference (cm)</label><input id="a_waist" type="number" step="0.1"></div>
+      <div class="field"><label>Hip Circumference (cm)</label><input id="a_hip" type="number" step="0.1"></div>
+      <div class="field"><label>Neck Circumference (cm)</label><input id="a_neck" type="number" step="0.1"></div>
+      <div class="field"><label>Calf Circumference (cm)</label><input id="a_calf" type="number" step="0.1"></div>
+      <div class="field"><label>Mid-Arm Circumference / MUAC (cm)</label><input id="a_muac" type="number" step="0.1"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Bedside Sarcopenia Tests</h2>
+    <div class="grid">
+      <div class="field"><label>Handgrip Strength, dominant hand (kg)</label><input id="s_grip" type="number" step="0.1">
+        <div class="hint">Normal cutoff: Men ≥27kg, Women ≥16kg (AWGS 2019)</div>
+      </div>
+      <div class="field"><label>4-metre Gait Time (seconds)</label><input id="s_gait" type="number" step="0.1">
+        <div class="hint">Speed below 1.0 m/s (i.e. time above 4 sec) — slow, sarcopenia risk (AWGS 2019)</div>
+      </div>
+      <div class="field"><label>Chair Stand Test — 5 rises (seconds)</label><input id="s_chair" type="number" step="0.1">
+        <div class="hint">Above 12 seconds — impaired</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Family History</h2>
+    <div class="grid">
+      <div class="field"><label><input type="checkbox" id="fh_bp" style="width:auto;display:inline;margin-right:6px;">BP (Hypertension)</label></div>
+      <div class="field"><label><input type="checkbox" id="fh_sugar" style="width:auto;display:inline;margin-right:6px;">Sugar (Diabetes)</label></div>
+      <div class="field"><label><input type="checkbox" id="fh_heart" style="width:auto;display:inline;margin-right:6px;">Heart Disease</label></div>
+      <div class="field"><label><input type="checkbox" id="fh_cancer" style="width:auto;display:inline;margin-right:6px;">Cancer</label></div>
+      <div class="field"><label><input type="checkbox" id="fh_stroke" style="width:auto;display:inline;margin-right:6px;">Brain Stroke</label></div>
+      <div class="field"><label><input type="checkbox" id="fh_meno" style="width:auto;display:inline;margin-right:6px;">Menopause (for female patients)</label></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Core Metabolic Markers</h2>
+    <div class="grid">
+      <div class="field"><label>Fasting Glucose (mg/dL)</label><input id="m_glucose" type="number" step="0.1"></div>
+      <div class="field"><label>Fasting Insulin (µIU/mL)</label><input id="m_insulin" type="number" step="0.1">
+        <div class="hint">Typical range &lt;25 µIU/mL — flag if far outside this</div>
+      </div>
+      <div class="field"><label>Fasting Triglycerides (mg/dL)</label><input id="m_trig" type="number" step="0.1"></div>
+      <div class="field"><label>HbA1c (%)</label><input id="m_hba1c" type="number" step="0.1"></div>
+      <div class="field"><label>LDL Cholesterol (mg/dL)</label><input id="m_ldl" type="number" step="0.1"></div>
+      <div class="field"><label>HDL Cholesterol (mg/dL)</label><input id="m_hdl" type="number" step="0.1"></div>
+      <div class="field"><label>C-Peptide (ng/mL)</label><input id="m_cpeptide" type="number" step="0.01"></div>
+      <div class="field"><label>Pro-insulin (pmol/L)</label><input id="m_proinsulin" type="number" step="0.1">
+        <div class="hint">Normal below 11 pmol/L — above signals beta-cell stress</div>
+      </div>
+      <div class="field"><label>Faecal Elastase (mcg/g) — if malabsorption suspected</label><input id="m_elastase" type="number" step="0.1">
+        <div class="hint">&gt;200 normal · 100-200 moderate insufficiency · &lt;100 severe insufficiency</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Micronutrients</h2>
+    <div class="grid">
+      <div class="field"><label>Vitamin B12 (pg/mL)</label><input id="n_b12" type="number" step="0.1"></div>
+      <div class="field"><label>Folic Acid (ng/mL)</label><input id="n_folate" type="number" step="0.1"></div>
+      <div class="field"><label>25(OH) Vitamin D (ng/mL)</label><input id="n_vitd" type="number" step="0.1"></div>
+      <div class="field"><label>Serum Calcium (mg/dL)</label><input id="n_calcium" type="number" step="0.1"></div>
+      <div class="field"><label>Serum Ferritin (ng/mL)</label><input id="n_ferritin" type="number" step="0.1"></div>
+      <div class="field"><label>Transferrin Saturation (%)</label><input id="n_transferrin" type="number" step="0.1"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Lifestyle</h2>
+    <div class="grid">
+      <div class="field"><label>Cigarettes per day</label><input id="l_cigs" type="number"></div>
+      <div class="field"><label>Years smoked</label><input id="l_years" type="number"></div>
+      <div class="field"><label>Alcohol volume per drink (ml)</label><input id="l_alcvol" type="number"></div>
+      <div class="field"><label>Alcohol % ABV (Beer~5, Whisky~40, Wine~12, Toddy~6)</label><input id="l_abv" type="number" step="0.1"></div>
+      <div class="field"><label>Drinks per week</label><input id="l_drinks" type="number"></div>
+      <div class="field"><label>Usual Bedtime</label>
+        <select id="l_bedtime">
+          <option value="early">Before 10:00 PM</option>
+          <option value="mid" selected>10:00 PM – 12:00 Midnight</option>
+          <option value="late">After 12:00 Midnight</option>
+        </select>
+      </div>
+      <div class="field"><label>Average Daily Steps</label>
+        <select id="l_steps">
+          <option value="high">Above 12,000 (Active)</option>
+          <option value="mod" selected>7,500 – 12,000 (Moderate)</option>
+          <option value="low">3,000 – 7,500 (Low)</option>
+          <option value="vlow">Below 3,000 (Sedentary)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Comorbidities</h2>
+    <div class="grid">
+      <div class="field"><label><input type="checkbox" id="c_kidney" style="width:auto;display:inline;margin-right:6px;">Chronic Kidney Disease</label></div>
+      <div class="field"><label><input type="checkbox" id="c_liver" style="width:auto;display:inline;margin-right:6px;">Fatty Liver</label></div>
+      <div class="field"><label><input type="checkbox" id="c_ptca" style="width:auto;display:inline;margin-right:6px;">Angiography / PTCA / Stent</label></div>
+      <div class="field"><label><input type="checkbox" id="c_stroke" style="width:auto;display:inline;margin-right:6px;">Brain Stroke</label></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Medications & Duration of Use</h2>
+    <div class="grid">
+      <div class="field"><label>Statins</label>
+        <select id="med_statin">
+          <option value="none" selected>Not on statins</option>
+          <option value="lt12m">Less than 12 months</option>
+          <option value="1to5">1 – 5 years</option>
+          <option value="5to12">5 – 12 years</option>
+          <option value="gt12">More than 12 years</option>
+        </select>
+      </div>
+      <div class="field"><label>BP Tablets</label>
+        <select id="med_bp">
+          <option value="none" selected>Not on BP medication</option>
+          <option value="lt12m">Less than 12 months</option>
+          <option value="1to5">1 – 5 years</option>
+          <option value="5to12">5 – 12 years</option>
+          <option value="gt12">More than 12 years</option>
+        </select>
+      </div>
+      <div class="field"><label>Sugar (Diabetes) Tablets</label>
+        <select id="med_sugar">
+          <option value="none" selected>Not on diabetes medication</option>
+          <option value="lt12m">Less than 12 months</option>
+          <option value="1to5">1 – 5 years</option>
+          <option value="5to12">5 – 12 years</option>
+          <option value="gt12">More than 12 years</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Body Composition (BIA / DEXA / Imaging — fill if available)</h2>
+    <div class="grid">
+      <div class="field"><label>SMI (kg/m²)</label><input id="b_smi" type="number" step="0.1"></div>
+      <div class="field"><label>Visceral Fat Area — BIA/MRI/CT (cm²)</label><input id="b_vfa" type="number" step="0.1"></div>
+      <div class="field"><label>Phase Angle (degrees)</label><input id="b_phase" type="number" step="0.1"></div>
+      <div class="field"><label>Body Fat (%)</label><input id="b_fat" type="number" step="0.1"></div>
+    </div>
+  </div>
+
+  <div class="note-box no-print">
+    CWR (Dr. Nehru Method) = Calf Circumference ÷ Waist Circumference — calculated automatically from the
+    Anthropometry section above (Calf and Waist fields). Verified against sample data: 35cm ÷ 122cm = 0.29 ✓
+  </div>
+
+  <button class="calc-btn no-print" onclick="calculate()">Calculate Results</button>
+  <button class="calc-btn no-print" id="saveBtn" onclick="saveToRecords()" style="background:#1a7a4c;display:none;">Save to Records</button>
+  <div id="saveStatus" style="text-align:center;font-size:13px;margin-top:-10px;margin-bottom:10px;"></div>
+
+  <div class="section" id="resultsSection" style="display:none;">
+    <h2>Calculated Results</h2>
+    <table class="results-table" id="resultsTable"></table>
+
+    <h2 style="margin-top:24px;">Speedometer Gauges</h2>
+    <div class="speedo-row" id="speedoRow"></div>
+  </div>
+
+  <div class="disclaimer">
+    All India-specific cutoffs (HOMA-IR, TyG Index, sarcopenia thresholds) per Dr. Muddu Surendra Nehru MD, Professor
+    of Medicine, HOMA Healthcare Center, RSSDI Life Member 8058. Phenotype (TOFI/NWCO/MONW) thresholds are proposed
+    operational cutoffs from published Indian cohort data, not universal consensus. This tool supports clinical
+    judgement — it does not replace it.
+    <span class="name">DR MUDDU SURENDRA NEHRU | 0996372199</span>
+  </div>
+
+  </div><!-- /mainCalculator -->
+
+</div>
+
+<script>
+// ---- API base (relative, works on any deployed domain) ----
+const API_BASE = '/api';
+let authToken = null;
+
+async function staffLogin() {
+  const email = document.getElementById('staff_email').value;
+  const password = document.getElementById('staff_password').value;
+  const statusEl = document.getElementById('loginStatus');
+  statusEl.textContent = 'Logging in...';
+  statusEl.style.color = '#666';
+  try {
+    const res = await fetch(API_BASE + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      authToken = data.token;
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('mainCalculator').style.display = 'block';
+      document.getElementById('saveBtn').style.display = 'block';
+    } else {
+      statusEl.textContent = data.error || 'Login failed. Check email/password.';
+      statusEl.style.color = '#c0392b';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Connection error: ' + err.message;
+    statusEl.style.color = '#c0392b';
+  }
+}
+
+async function saveToRecords() {
+  const num = id => parseFloat(document.getElementById(id).value) || null;
+  const val = id => document.getElementById(id).value || null;
+
+  const comorbList = [];
+  ['c_kidney','c_liver','c_ptca','c_stroke'].forEach(id => {
+    if (document.getElementById(id).checked) comorbList.push(id);
+  });
+  const fhList = [];
+  ['fh_bp','fh_sugar','fh_heart','fh_cancer','fh_stroke','fh_meno'].forEach(id => {
+    if (document.getElementById(id).checked) fhList.push(id);
+  });
+
+  const calf = num('a_calf'), waist = num('a_waist');
+  const height = num('a_height'), weight = num('a_weight');
+  const glucose = num('m_glucose'), insulin = num('m_insulin'), trig = num('m_trig');
+  const hip = num('a_hip');
+
+  const payload = {
+    patient_name: val('p_name'), patient_age: num('p_age'), patient_sex: val('p_sex'),
+    registration_no: val('p_reg'), assessment_date: val('p_date'),
+    height_cm: height, weight_kg: weight, waist_cm: waist, hip_cm: hip,
+    neck_cm: num('a_neck'), calf_cm: calf, muac_cm: num('a_muac'),
+    handgrip_kg: num('s_grip'), gait_time_sec: num('s_gait'), chair_stand_sec: num('s_chair'),
+    fasting_glucose: glucose, fasting_insulin: insulin, triglycerides: trig,
+    hba1c: num('m_hba1c'), ldl: num('m_ldl'), hdl: num('m_hdl'),
+    c_peptide: num('m_cpeptide'), proinsulin: num('m_proinsulin'), fecal_elastase: num('m_elastase'),
+    vitamin_b12: num('n_b12'), folic_acid: num('n_folate'), vitamin_d: num('n_vitd'),
+    serum_calcium: num('n_calcium'), serum_ferritin: num('n_ferritin'), transferrin_sat: num('n_transferrin'),
+    cigarettes_per_day: num('l_cigs'), years_smoked: num('l_years'),
+    alcohol_vol_ml: num('l_alcvol'), alcohol_abv: num('l_abv'), drinks_per_week: num('l_drinks'),
+    bedtime: val('l_bedtime'), daily_steps: val('l_steps'),
+    comorbidities: comorbList.join(','), family_history: fhList.join(','),
+    statin_duration: val('med_statin'), bp_med_duration: val('med_bp'), sugar_med_duration: val('med_sugar'),
+    homa_ir: (glucose && insulin) ? (glucose * insulin / 405) : null,
+    tyg_index: (trig && glucose) ? Math.log(trig * glucose / 2) : null,
+    bmi: (height && weight) ? weight / Math.pow(height / 100, 2) : null,
+    whr: (waist && hip) ? waist / hip : null,
+    whtr: (waist && height) ? waist / height : null,
+    cwr: (calf && waist) ? calf / waist : null
+  };
+
+  const statusEl = document.getElementById('saveStatus');
+  statusEl.textContent = 'Saving...';
+  statusEl.style.color = '#666';
+  try {
+    const res = await fetch(API_BASE + '/calculator/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      statusEl.textContent = '✓ Saved to records (ID: ' + data.id.substring(0,8) + ')';
+      statusEl.style.color = '#1a7a4c';
+    } else {
+      statusEl.textContent = 'Save failed: ' + (data.error || 'unknown error');
+      statusEl.style.color = '#c0392b';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Connection error: ' + err.message;
+    statusEl.style.color = '#c0392b';
+  }
+}
+</script>
+<script>
+function flag(cond, warnCond) {
+  if (cond) return '<span class="flag flag-high">High</span>';
+  if (warnCond) return '<span class="flag flag-warn">Borderline</span>';
+  return '<span class="flag flag-normal">Normal</span>';
+}
+
+function calculate() {
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
+
+  const height = num('a_height');
+  const weight = num('a_weight');
+  const waist = num('a_waist');
+  const hip = num('a_hip');
+  const neck = num('a_neck');
+  const glucose = num('m_glucose');
+  const insulin = num('m_insulin');
+  const trig = num('m_trig');
+  const grip = num('s_grip');
+  const gaitTime = num('s_gait');
+  const chairTime = num('s_chair');
+  const elastase = num('m_elastase');
+  const proinsulin = num('m_proinsulin');
+  const sex = document.getElementById('p_sex').value;
+  const b12 = num('n_b12');
+  const vitd = num('n_vitd');
+  const ferritin = num('n_ferritin');
+  const calf = num('a_calf');
+  const ldl = num('m_ldl');
+  const hdl = num('m_hdl');
+  const cigs = num('l_cigs');
+  const years = num('l_years');
+  const drinksPerWeek = num('l_drinks');
+  const alcVol = num('l_alcvol');
+  const abv = num('l_abv');
+  const bedtime = document.getElementById('l_bedtime').value;
+  const steps = document.getElementById('l_steps').value;
+
+  const cwr = (calf && waist) ? calf / waist : null;
+
+  const bedtimeLabel = {early:'Before 10 PM (favourable)', mid:'10 PM–12 Midnight', late:'After 12 Midnight (unfavourable)'}[bedtime];
+  const stepsLabel = {high:'Above 12,000 (Active)', mod:'7,500–12,000 (Moderate)', low:'3,000–7,500 (Low)', vlow:'Below 3,000 (Sedentary)'}[steps];
+
+  const medLabel = v => ({none:'Not on medication', lt12m:'<12 months', '1to5':'1–5 years', '5to12':'5–12 years', gt12:'>12 years'})[v];
+  const statin = document.getElementById('med_statin').value;
+  const bpMed = document.getElementById('med_bp').value;
+  const sugarMed = document.getElementById('med_sugar').value;
+
+  const comorbList = [];
+  if (document.getElementById('c_kidney').checked) comorbList.push('Chronic Kidney Disease');
+  if (document.getElementById('c_liver').checked) comorbList.push('Fatty Liver');
+  if (document.getElementById('c_ptca').checked) comorbList.push('Angiography/PTCA/Stent');
+  if (document.getElementById('c_stroke').checked) comorbList.push('Brain Stroke');
+
+  const fhList = [];
+  if (document.getElementById('fh_bp').checked) fhList.push('BP');
+  if (document.getElementById('fh_sugar').checked) fhList.push('Sugar');
+  if (document.getElementById('fh_heart').checked) fhList.push('Heart Disease');
+  if (document.getElementById('fh_cancer').checked) fhList.push('Cancer');
+  if (document.getElementById('fh_stroke').checked) fhList.push('Brain Stroke');
+  if (document.getElementById('fh_meno').checked) fhList.push('Menopause');
+
+  // Core formulas
+  const homaIR = (glucose && insulin) ? (glucose * insulin / 405) : null;
+  const tyg = (trig && glucose) ? Math.log(trig * glucose / 2) : null;
+  const bmi = (height && weight) ? weight / Math.pow(height / 100, 2) : null;
+  const whr = (waist && hip) ? waist / hip : null;
+  const whtr = (waist && height) ? waist / height : null;
+  const packYears = (cigs && years) ? (cigs / 20) * years : null;
+  const alcUnitsPerWeek = (alcVol && abv && drinksPerWeek)
+    ? (alcVol * (abv / 100) * 0.789 * drinksPerWeek) / 10
+    : null;
+
+  let rows = [];
+  rows.push(['HOMA-IR', homaIR !== null ? homaIR.toFixed(2) : '—', flag(homaIR > 2.3), 'India cutoff: above 2.3']);
+  rows.push(['TyG Index', tyg !== null ? tyg.toFixed(2) : '—', flag(tyg > 8.82), 'India cutoff: above 8.82 (ln scale)']);
+  rows.push(['BMI', bmi !== null ? bmi.toFixed(1) + ' kg/m²' : '—', flag(bmi > 23, bmi > 25), 'India screening cutoff: above 23']);
+  rows.push(['Waist-to-Hip Ratio', whr !== null ? whr.toFixed(2) : '—', flag(sex === 'Male' ? whr > 0.9 : whr > 0.85)]);
+  rows.push(['Waist-to-Height Ratio', whtr !== null ? whtr.toFixed(2) : '—', flag(whtr > 0.5)]);
+  rows.push(['Waist Circumference', waist ? waist + ' cm' : '—', flag(sex === 'Male' ? waist > 90 : waist > 80, waist > 85)]);
+  rows.push(['CWR (Calf ÷ Waist)', cwr !== null ? cwr.toFixed(2) : '—', flag(cwr !== null && cwr < 0.35), 'Below 0.35 — high sarcopenia risk (Dr. Nehru Method)']);
+  rows.push(['LDL Cholesterol', ldl ? ldl + ' mg/dL' : '—', flag(ldl > 130, ldl > 100 && ldl <= 130)]);
+  rows.push(['HDL Cholesterol', hdl ? hdl + ' mg/dL' : '—', flag(sex === 'Male' ? hdl < 40 : hdl < 50)]);
+  rows.push(['Neck Circumference', neck ? neck + ' cm' : '—', flag(sex === 'Male' ? neck > 43 : neck > 38)]);
+  rows.push(['Handgrip Strength', grip ? grip + ' kg' : '—', flag(sex === 'Male' ? grip < 27.5 : grip < 18, false), 'Men <27.5kg (Indian Delphi 2025), Women <18kg (AWGS 2019)']);
+  rows.push(['4-metre Gait Speed', gaitTime ? (4/gaitTime).toFixed(2) + ' m/s' : '—', flag(gaitTime > 4), 'Below 1.0 m/s — slow, sarcopenia risk']);
+  rows.push(['Chair Stand Test (5 rises)', chairTime ? chairTime + ' sec' : '—', flag(chairTime > 12), 'Above 12 sec — impaired']);
+  rows.push(['Pro-insulin', proinsulin ? proinsulin + ' pmol/L' : '—', flag(proinsulin > 11), 'Normal below 11 pmol/L']);
+  if (elastase > 0) {
+    let elastaseNote, elastaseFlag;
+    if (elastase < 100) {
+      elastaseFlag = '<span class="flag flag-high">Severe Insufficiency</span>';
+      elastaseNote = 'Below 100 mcg/g — severe pancreatic exocrine insufficiency';
+    } else if (elastase < 200) {
+      elastaseFlag = '<span class="flag flag-warn">Moderate Insufficiency</span>';
+      elastaseNote = '100–200 mcg/g — moderate pancreatic exocrine insufficiency';
+    } else {
+      elastaseFlag = '<span class="flag flag-normal">Normal</span>';
+      elastaseNote = 'Above 200 mcg/g — normal pancreatic exocrine function';
+    }
+    rows.push(['Faecal Elastase', elastase + ' mcg/g', elastaseFlag, elastaseNote]);
+  }
+  rows.push(['Pack-Years', packYears !== null ? packYears.toFixed(1) : '—', '']);
+  rows.push(['Alcohol Units / Week', alcUnitsPerWeek !== null ? alcUnitsPerWeek.toFixed(1) : '—', flag(alcUnitsPerWeek > 14)]);
+  rows.push(['Vitamin B12', b12 ? b12 + ' pg/mL' : '—', flag(b12 > 0 && b12 < 200, b12 >= 200 && b12 < 300), 'Deficient <200, Borderline 200-300 pg/mL']);
+  rows.push(['Vitamin D (25-OH)', vitd ? vitd + ' ng/mL' : '—', flag(vitd > 0 && vitd < 20, vitd >= 20 && vitd < 30)]);
+  rows.push(['Ferritin', ferritin ? ferritin + ' ng/mL' : '—', flag(sex === 'Male' ? ferritin > 300 : ferritin > 200)]);
+  rows.push(['Sleep Timing', bedtimeLabel, flag(bedtime === 'late', bedtime === 'mid')]);
+  rows.push(['Daily Steps', stepsLabel, flag(steps === 'vlow', steps === 'low')]);
+  rows.push(['Comorbidities', comorbList.length ? comorbList.join(', ') : 'None reported', comorbList.length ? '<span class="flag flag-warn">Present</span>' : '<span class="flag flag-normal">None</span>']);
+  rows.push(['Family History', fhList.length ? fhList.join(', ') : 'None reported', fhList.length ? '<span class="flag flag-warn">Present</span>' : '<span class="flag flag-normal">None</span>']);
+  rows.push(['Statin Use', medLabel(statin), '']);
+  rows.push(['BP Medication', medLabel(bpMed), '']);
+  rows.push(['Diabetes Medication', medLabel(sugarMed), '']);
+
+  // Insulin sanity check
+  let insulinNote = '';
+  if (insulin > 0 && insulin > 100) {
+    insulinNote = '<tr><td colspan="4" style="background:#fff4e0;color:#b5750a;font-size:12px;padding:10px;">' +
+      '⚠ Fasting insulin value (' + insulin + ' µIU/mL) is far outside the typical range (usually &lt;25 µIU/mL). ' +
+      'Please verify units/lab value before clinical use.</td></tr>';
+  }
+
+  const table = document.getElementById('resultsTable');
+  table.innerHTML = '<tr><th>Measure</th><th>Value</th><th>Flag</th><th>Note</th></tr>' +
+    rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2] || ''}</td><td style="font-size:12px;color:#888;">${r[3] || ''}</td></tr>`).join('') +
+    insulinNote;
+
+  document.getElementById('resultsSection').style.display = 'block';
+
+  // ---- Round speedometer rendering ----
+  function speedoSVG(value, maxScale, zones, decimals) {
+    // zones: array of {to, color} defining cumulative boundaries from 0 to maxScale
+    const cx = 100, cy = 100, r = 80;
+    const startAngle = -180, endAngle = 0; // semicircle, degrees
+    function angleFor(v) {
+      const pct = Math.min(Math.max(v / maxScale, 0), 1);
+      return startAngle + pct * (endAngle - startAngle);
+    }
+    function polar(angleDeg, radius) {
+      const rad = (angleDeg * Math.PI) / 180;
+      return [cx + radius * Math.cos(rad), cy + radius * Math.sin(rad)];
+    }
+    function arcPath(a1, a2, radius) {
+      const [x1, y1] = polar(a1, radius);
+      const [x2, y2] = polar(a2, radius);
+      const largeArc = (a2 - a1) > 180 ? 1 : 0;
+      return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
+    }
+
+    let arcs = '';
+    let prevBound = 0;
+    zones.forEach(z => {
+      const a1 = angleFor(prevBound);
+      const a2 = angleFor(z.to);
+      arcs += `<path d="${arcPath(a1, a2, r)}" stroke="${z.color}" stroke-width="18" fill="none" stroke-linecap="butt"/>`;
+      prevBound = z.to;
+    });
+
+    const needleAngle = value === null ? startAngle : angleFor(value);
+    const [nx, ny] = polar(needleAngle, r - 15);
+
+    const displayVal = value === null ? '—' : value.toFixed(decimals);
+
+    return `
+      <svg viewBox="0 0 200 115" width="100%" height="auto">
+        ${arcs}
+        <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#222" stroke-width="3"/>
+        <circle cx="${cx}" cy="${cy}" r="6" fill="#222"/>
+        <text x="${cx}" y="${cy+2}" font-size="0" fill="none"></text>
+      </svg>
+      <div class="speedo-value">${displayVal}</div>
+    `;
+  }
+
+  const speedoRow = document.getElementById('speedoRow');
+  speedoRow.innerHTML = '';
+
+  function addSpeedo(label, value, maxScale, zones, decimals, rangeNote) {
+    const box = document.createElement('div');
+    box.className = 'speedo-box';
+    box.innerHTML = `<div class="speedo-label">${label}</div>` +
+      speedoSVG(value, maxScale, zones, decimals) +
+      `<div class="speedo-range">${rangeNote}</div>`;
+    speedoRow.appendChild(box);
+  }
+
+  addSpeedo('HOMA-IR', homaIR, 10,
+    [{to:2.3,color:'#2ecc71'},{to:5,color:'#f39c12'},{to:10,color:'#c0392b'}], 2, 'Green ≤2.3 · Red >5');
+
+  addSpeedo('TyG Index', tyg, 11,
+    [{to:8.82,color:'#2ecc71'},{to:9.5,color:'#f39c12'},{to:11,color:'#c0392b'}], 2, 'Green ≤8.82 · Red >9.5');
+
+  addSpeedo('BMI', bmi, 40,
+    [{to:23,color:'#2ecc71'},{to:27.5,color:'#f39c12'},{to:40,color:'#c0392b'}], 1, 'Green ≤23 · Red >27.5');
+
+  addSpeedo('Waist (cm)', waist, 130,
+    [{to:85,color:'#2ecc71'},{to:100,color:'#f39c12'},{to:130,color:'#c0392b'}], 0, 'Green ≤85 · Red >100');
+
+  addSpeedo('CWR (Calf÷Waist)', cwr, 0.6,
+    [{to:0.35,color:'#c0392b'},{to:0.6,color:'#2ecc71'}], 2, 'Red <0.35 (high risk)');
+}
+</script>
+</body>
+</html>
