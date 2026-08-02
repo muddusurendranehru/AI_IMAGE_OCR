@@ -16,6 +16,18 @@
     width: 100% !important;
     background: white !important;
   }
+  .modal-content, .modal-content-wide {
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+  }
+  .modal-body {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
   .modal-header button,
   .btn-print,
   .btn-close {
