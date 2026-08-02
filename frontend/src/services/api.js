@@ -9,13 +9,7 @@ import axios from 'axios';
 // Uses env var if set, otherwise falls back to production URL
 // NEVER uses localhost in production builds
 const getApiBaseUrl = () => {
-  const envUrl = process.env.REACT_APP_API_URL;
-  const productionUrl = 'https://ai-image-ocr-5ejd.onrender.com/api';
-  const devUrl = 'http://localhost:3008/api';
-
-  if (envUrl) return envUrl;
-  if (process.env.NODE_ENV === 'production') return productionUrl;
-  return devUrl;
+  return process.env.REACT_APP_API_URL || "/api";
 };
 
 const api = axios.create({

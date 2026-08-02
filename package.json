@@ -5,6 +5,7 @@
   "main": "backend/app.js",
   "scripts": {
     "start": "node backend/app.js",
+    "build": "npm run frontend:install && npm run frontend:build",
     "dev": "nodemon backend/app.js",
     "frontend": "cd frontend && npm start",
     "frontend:build": "cd frontend && npm run build",

@@ -112,8 +112,8 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Health check route
-app.get('/', (req, res) => {
+// API info route
+app.get('/api', (req, res) => {
   res.json({
     success: true,
     message: '🔬 OCR Lab Report API is running!',
@@ -164,16 +164,30 @@ app.get('/api/status', async (req, res) => {
 });
 
 // =====================================================
-// ERROR HANDLING
+// FRONTEND STATIC FILES (merged single-service deployment)
 // =====================================================
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route not found'
+const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
+if (fs.existsSync(frontendBuild)) {
+  // Serve React static files
+  app.use(express.static(frontendBuild));
+  // React Router catch-all — must be AFTER all API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuild, 'index.html'));
   });
-});
+} else {
+  // Dev mode: no build yet — return 404 JSON for unmatched routes
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Route not found'
+    });
+  });
+}
+
+// =====================================================
+// ERROR HANDLING
+// =====================================================
 
 // Global error handler
 app.use((err, req, res, next) => {
