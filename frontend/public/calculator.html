@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0055)https://ai-ocr-lab-reports.onrender.com/calculator.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <title>HOMA Metabolic Assessment Calculator — Dr. Nehru Method</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
@@ -58,10 +58,14 @@
   }
   input, select {
     width: 100%;
-    padding: 8px 10px;
+    padding: 12px 14px;
+    min-height: 44px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 16px;
+  }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
   }
   .field { margin-bottom: 4px; }
   .hint { font-size: 11px; color: #888; margin-top: 2px; }
@@ -164,17 +168,17 @@
 <body>
 <div class="wrap">
 
-  <div class="section" id="loginSection">
+  <div class="section" id="loginSection" style="display: none;">
     <h2>Staff Login</h2>
     <div class="grid">
       <div class="field"><label>Email</label><input id="staff_email" type="email" placeholder="staff@homahealthcarecenter.in"></div>
       <div class="field"><label>Password</label><input id="staff_password" type="password"></div>
     </div>
     <button class="calc-btn no-print" onclick="staffLogin()" style="margin-top:10px;">Login</button>
-    <div id="loginStatus" style="text-align:center;font-size:13px;margin-top:8px;"></div>
+    <div id="loginStatus" style="text-align: center; font-size: 13px; margin-top: 8px; color: rgb(102, 102, 102);">Logging in...</div>
   </div>
 
-  <div id="mainCalculator" style="display:none;">
+  <div id="mainCalculator" style="display: block;">
 
   <header>
     <h1>HOMA Metabolic Assessment Calculator</h1>
@@ -190,6 +194,9 @@
   <div class="section">
     <h2>Patient Details</h2>
     <div class="grid">
+      <div class="field"><label>Mobile Number</label><input id="p_mobile" type="text" inputmode="tel" autocomplete="tel"></div>
+      <div class="field"><label>Email Address</label><input id="p_email" type="text" inputmode="email" autocomplete="email"></div>
+      <div class="field"><label>Clerk User ID</label><input id="p_clerk" type="text" placeholder="user_..." autocomplete="off"></div>
       <div class="field"><label>Full Name</label><input id="p_name" type="text"></div>
       <div class="field"><label>Age</label><input id="p_age" type="number"></div>
       <div class="field"><label>Sex</label>
@@ -284,14 +291,14 @@
       <div class="field"><label>Usual Bedtime</label>
         <select id="l_bedtime">
           <option value="early">Before 10:00 PM</option>
-          <option value="mid" selected>10:00 PM – 12:00 Midnight</option>
+          <option value="mid" selected="">10:00 PM – 12:00 Midnight</option>
           <option value="late">After 12:00 Midnight</option>
         </select>
       </div>
       <div class="field"><label>Average Daily Steps</label>
         <select id="l_steps">
           <option value="high">Above 12,000 (Active)</option>
-          <option value="mod" selected>7,500 – 12,000 (Moderate)</option>
+          <option value="mod" selected="">7,500 – 12,000 (Moderate)</option>
           <option value="low">3,000 – 7,500 (Low)</option>
           <option value="vlow">Below 3,000 (Sedentary)</option>
         </select>
@@ -310,11 +317,11 @@
   </div>
 
   <div class="section">
-    <h2>Medications & Duration of Use</h2>
+    <h2>Medications &amp; Duration of Use</h2>
     <div class="grid">
       <div class="field"><label>Statins</label>
         <select id="med_statin">
-          <option value="none" selected>Not on statins</option>
+          <option value="none" selected="">Not on statins</option>
           <option value="lt12m">Less than 12 months</option>
           <option value="1to5">1 – 5 years</option>
           <option value="5to12">5 – 12 years</option>
@@ -323,7 +330,7 @@
       </div>
       <div class="field"><label>BP Tablets</label>
         <select id="med_bp">
-          <option value="none" selected>Not on BP medication</option>
+          <option value="none" selected="">Not on BP medication</option>
           <option value="lt12m">Less than 12 months</option>
           <option value="1to5">1 – 5 years</option>
           <option value="5to12">5 – 12 years</option>
@@ -332,7 +339,7 @@
       </div>
       <div class="field"><label>Sugar (Diabetes) Tablets</label>
         <select id="med_sugar">
-          <option value="none" selected>Not on diabetes medication</option>
+          <option value="none" selected="">Not on diabetes medication</option>
           <option value="lt12m">Less than 12 months</option>
           <option value="1to5">1 – 5 years</option>
           <option value="5to12">5 – 12 years</option>
@@ -358,15 +365,55 @@
   </div>
 
   <button class="calc-btn no-print" onclick="calculate()">Calculate Results</button>
-  <button class="calc-btn no-print" id="saveBtn" onclick="saveToRecords()" style="background:#1a7a4c;display:none;">Save to Records</button>
+  <button class="calc-btn no-print" id="saveBtn" onclick="saveToRecords()" style="background: rgb(26, 122, 76); display: block;">Save to Records</button>
   <div id="saveStatus" style="text-align:center;font-size:13px;margin-top:-10px;margin-bottom:10px;"></div>
 
-  <div class="section" id="resultsSection" style="display:none;">
+  <div class="section" id="resultsSection" style="display: block;">
     <h2>Calculated Results</h2>
-    <table class="results-table" id="resultsTable"></table>
+    <table class="results-table" id="resultsTable"><tbody><tr><th>Measure</th><th>Value</th><th>Flag</th><th>Note</th></tr><tr><td>HOMA-IR</td><td>5.73</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;">India cutoff: above 2.3</td></tr><tr><td>TyG Index</td><td>9.83</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;">India cutoff: above 8.82 (ln scale)</td></tr><tr><td>BMI</td><td>35.5 kg/m²</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;">India screening cutoff: above 23</td></tr><tr><td>Waist-to-Hip Ratio</td><td>0.89</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Waist-to-Height Ratio</td><td>0.67</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Waist Circumference</td><td>106.6 cm</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>CWR (Calf ÷ Waist)</td><td>0.32</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;">Below 0.35 — high sarcopenia risk (Dr. Nehru Method)</td></tr><tr><td>LDL Cholesterol</td><td>101 mg/dL</td><td><span class="flag flag-warn">Borderline</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>HDL Cholesterol</td><td>40 mg/dL</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Neck Circumference</td><td>32 cm</td><td><span class="flag flag-normal">Normal</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Handgrip Strength</td><td>19 kg</td><td><span class="flag flag-normal">Normal</span></td><td style="font-size:12px;color:#888;">Men &lt;27.5kg (Indian Delphi 2025), Women &lt;18kg (AWGS 2019)</td></tr><tr><td>4-metre Gait Speed</td><td>0.40 m/s</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;">Below 1.0 m/s — slow, sarcopenia risk</td></tr><tr><td>Chair Stand Test (5 rises)</td><td>20 sec</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;">Above 12 sec — impaired</td></tr><tr><td>Pro-insulin</td><td>9 pmol/L</td><td><span class="flag flag-normal">Normal</span></td><td style="font-size:12px;color:#888;">Normal below 11 pmol/L</td></tr><tr><td>Pack-Years</td><td>—</td><td></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Alcohol Units / Week</td><td>—</td><td><span class="flag flag-normal">Normal</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Vitamin B12</td><td>232 pg/mL</td><td><span class="flag flag-warn">Borderline</span></td><td style="font-size:12px;color:#888;">Deficient &lt;200, Borderline 200-300 pg/mL</td></tr><tr><td>Vitamin D (25-OH)</td><td>13.58 ng/mL</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Ferritin</td><td>230 ng/mL</td><td><span class="flag flag-high">High</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Sleep Timing</td><td>10 PM–12 Midnight</td><td><span class="flag flag-warn">Borderline</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Daily Steps</td><td>7,500–12,000 (Moderate)</td><td><span class="flag flag-normal">Normal</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Comorbidities</td><td>None reported</td><td><span class="flag flag-normal">None</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Family History</td><td>BP, Sugar</td><td><span class="flag flag-warn">Present</span></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Statin Use</td><td>Not on medication</td><td></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>BP Medication</td><td>Not on medication</td><td></td><td style="font-size:12px;color:#888;"></td></tr><tr><td>Diabetes Medication</td><td>Not on medication</td><td></td><td style="font-size:12px;color:#888;"></td></tr></tbody></table>
 
     <h2 style="margin-top:24px;">Speedometer Gauges</h2>
-    <div class="speedo-row" id="speedoRow"></div>
+    <div class="speedo-row" id="speedoRow"><div class="speedo-box"><div class="speedo-label">HOMA-IR</div>
+      <svg viewBox="0 0 200 115" width="100%" height="auto">
+        <path d="M 20 99.99999999999999 A 80 80 0 0 1 39.99111442956323 47.095050774107854" stroke="#2ecc71" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 39.99111442956323 47.095050774107854 A 80 80 0 0 1 100 20" stroke="#f39c12" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 100 20 A 80 80 0 0 1 180 100" stroke="#c0392b" stroke-width="18" fill="none" stroke-linecap="butt"></path>
+        <line x1="100" y1="100" x2="114.68567793629565" y2="36.68072281246888" stroke="#222" stroke-width="3"></line>
+        <circle cx="100" cy="100" r="6" fill="#222"></circle>
+        <text x="100" y="102" font-size="0" fill="none"></text>
+      </svg>
+      <div class="speedo-value">5.73</div>
+    <div class="speedo-range">Green ≤2.3 · Red &gt;5</div></div><div class="speedo-box"><div class="speedo-label">TyG Index</div>
+      <svg viewBox="0 0 200 115" width="100%" height="auto">
+        <path d="M 20 99.99999999999999 A 80 80 0 0 1 164.98889598796006 53.34763244736547" stroke="#2ecc71" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 164.98889598796006 53.34763244736547 A 80 80 0 0 1 172.77055962836147 66.7667989598491" stroke="#f39c12" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 172.77055962836147 66.7667989598491 A 80 80 0 0 1 180 100" stroke="#c0392b" stroke-width="18" fill="none" stroke-linecap="butt"></path>
+        <line x1="100" y1="100" x2="161.3900254828937" y2="78.63964487163982" stroke="#222" stroke-width="3"></line>
+        <circle cx="100" cy="100" r="6" fill="#222"></circle>
+        <text x="100" y="102" font-size="0" fill="none"></text>
+      </svg>
+      <div class="speedo-value">9.83</div>
+    <div class="speedo-range">Green ≤8.82 · Red &gt;9.5</div></div><div class="speedo-box"><div class="speedo-label">BMI</div>
+      <svg viewBox="0 0 200 115" width="100%" height="auto">
+        <path d="M 20 99.99999999999999 A 80 80 0 0 1 118.67562910847242 22.210406368185872" stroke="#2ecc71" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 118.67562910847242 22.210406368185872 A 80 80 0 0 1 144.4456186415682 33.48243101579638" stroke="#f39c12" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 144.4456186415682 33.48243101579638 A 80 80 0 0 1 180 100" stroke="#c0392b" stroke-width="18" fill="none" stroke-linecap="butt"></path>
+        <line x1="100" y1="100" x2="161.06484953414235" y2="77.72705337472034" stroke="#222" stroke-width="3"></line>
+        <circle cx="100" cy="100" r="6" fill="#222"></circle>
+        <text x="100" y="102" font-size="0" fill="none"></text>
+      </svg>
+      <div class="speedo-value">35.5</div>
+    <div class="speedo-range">Green ≤23 · Red &gt;27.5</div></div><div class="speedo-box"><div class="speedo-label">Waist (cm)</div>
+      <svg viewBox="0 0 200 115" width="100%" height="auto">
+        <path d="M 20 99.99999999999999 A 80 80 0 0 1 137.1778537635015 29.163517947743202" stroke="#2ecc71" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 137.1778537635015 29.163517947743202 A 80 80 0 0 1 159.88085985368812 46.95018734073641" stroke="#f39c12" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 159.88085985368812 46.95018734073641 A 80 80 0 0 1 180 100" stroke="#c0392b" stroke-width="18" fill="none" stroke-linecap="butt"></path>
+        <line x1="100" y1="100" x2="154.88131515763098" y2="65.17125832636522" stroke="#222" stroke-width="3"></line>
+        <circle cx="100" cy="100" r="6" fill="#222"></circle>
+        <text x="100" y="102" font-size="0" fill="none"></text>
+      </svg>
+      <div class="speedo-value">107</div>
+    <div class="speedo-range">Green ≤85 · Red &gt;100</div></div><div class="speedo-box"><div class="speedo-label">CWR (Calf÷Waist)</div>
+      <svg viewBox="0 0 200 115" width="100%" height="auto">
+        <path d="M 20 99.99999999999999 A 80 80 0 0 1 120.70552360820166 22.725933896874537" stroke="#c0392b" stroke-width="18" fill="none" stroke-linecap="butt"></path><path d="M 120.70552360820166 22.725933896874537 A 80 80 0 0 1 180 100" stroke="#2ecc71" stroke-width="18" fill="none" stroke-linecap="butt"></path>
+        <line x1="100" y1="100" x2="106.43862830314946" y2="35.319677910713196" stroke="#222" stroke-width="3"></line>
+        <circle cx="100" cy="100" r="6" fill="#222"></circle>
+        <text x="100" y="102" font-size="0" fill="none"></text>
+      </svg>
+      <div class="speedo-value">0.32</div>
+    <div class="speedo-range">Red &lt;0.35 (high risk)</div></div></div>
   </div>
 
   <div class="disclaimer">
@@ -432,7 +479,15 @@ async function saveToRecords() {
   const glucose = num('m_glucose'), insulin = num('m_insulin'), trig = num('m_trig');
   const hip = num('a_hip');
 
+  const str = id => {
+    const el = document.getElementById(id);
+    return el && el.value != null ? String(el.value).trim() : '';
+  };
+
   const payload = {
+    mobile_number: str('p_mobile'),
+    email: str('p_email'),
+    clerk_user_id: str('p_clerk'),
     patient_name: val('p_name'), patient_age: num('p_age'), patient_sex: val('p_sex'),
     registration_no: val('p_reg'), assessment_date: val('p_date'),
     height_cm: height, weight_kg: weight, waist_cm: waist, hip_cm: hip,
@@ -685,5 +740,6 @@ function calculate() {
     [{to:0.35,color:'#c0392b'},{to:0.6,color:'#2ecc71'}], 2, 'Red <0.35 (high risk)');
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
