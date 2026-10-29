@@ -175,7 +175,7 @@
       <div class="field"><label>Password</label><input id="staff_password" type="password"></div>
     </div>
     <button class="calc-btn no-print" onclick="staffLogin()" style="margin-top:10px;">Login</button>
-    <div id="loginStatus" style="text-align: center; font-size: 13px; margin-top: 8px; color: rgb(102, 102, 102);">Logging in...</div>
+    <div id="loginStatus" style="text-align: center; font-size: 13px; margin-top: 8px; color: rgb(102, 102, 102);"></div>
   </div>
 
   <div id="mainCalculator" style="display: block;">
@@ -431,7 +431,31 @@
 <script>
 // ---- API base (relative, works on any deployed domain) ----
 const API_BASE = '/api';
-let authToken = null;
+const AUTH_TOKEN_KEY = 'token';
+let authToken = localStorage.getItem(AUTH_TOKEN_KEY);
+
+function showStaffLoggedIn() {
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('mainCalculator').style.display = 'block';
+  document.getElementById('saveBtn').style.display = 'block';
+}
+
+function showStaffLoginPrompt() {
+  document.getElementById('loginSection').style.display = 'block';
+  document.getElementById('loginStatus').textContent = '';
+}
+
+function clearStaffSession() {
+  authToken = null;
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  showStaffLoginPrompt();
+}
+
+if (authToken && authToken !== 'null' && authToken !== 'undefined') {
+  showStaffLoggedIn();
+} else {
+  clearStaffSession();
+}
 
 async function staffLogin() {
   const email = document.getElementById('staff_email').value;
@@ -448,9 +472,8 @@ async function staffLogin() {
     const data = await res.json();
     if (res.ok && data.token) {
       authToken = data.token;
-      document.getElementById('loginSection').style.display = 'none';
-      document.getElementById('mainCalculator').style.display = 'block';
-      document.getElementById('saveBtn').style.display = 'block';
+      localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+      showStaffLoggedIn();
     } else {
       statusEl.textContent = data.error || 'Login failed. Check email/password.';
       statusEl.style.color = '#c0392b';
@@ -512,6 +535,12 @@ async function saveToRecords() {
   };
 
   const statusEl = document.getElementById('saveStatus');
+  if (!authToken) {
+    statusEl.textContent = 'Please log in as staff to save assessments.';
+    statusEl.style.color = '#c0392b';
+    showStaffLoginPrompt();
+    return;
+  }
   statusEl.textContent = 'Saving...';
   statusEl.style.color = '#666';
   try {
@@ -523,7 +552,13 @@ async function saveToRecords() {
       },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 403) {
+      clearStaffSession();
+      statusEl.textContent = 'Please log in as staff to save assessments.';
+      statusEl.style.color = '#c0392b';
+      return;
+    }
     if (res.ok && data.success) {
       statusEl.textContent = '✓ Saved to records (ID: ' + data.id.substring(0,8) + ')';
       statusEl.style.color = '#1a7a4c';
