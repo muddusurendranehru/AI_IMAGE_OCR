@@ -10,14 +10,14 @@ const {
   insertIntoPatientAssessments,
   insertIntoCalculatorAssessments,
   calculatorAssessmentsTableExists,
-  getPatientAssessmentColumns
+  listPatientAssessments
 } = require('../services/patientAssessmentPersistence');
 
 // POST /api/calculator/save  -- save a new assessment (staff must be logged in)
 router.post('/save', authenticateToken, async (req, res) => {
   try {
     const enteredBy = req.user.id || req.user.userId || null;
-    const saved = await insertIntoPatientAssessments(pool, req.body, enteredBy);
+    const saved = await insertIntoPatientAssessments(req.body, enteredBy);
 
     try {
       if (await calculatorAssessmentsTableExists(pool)) {
@@ -46,25 +46,13 @@ router.post('/save', authenticateToken, async (req, res) => {
 // GET /api/calculator/list -- list past assessments (staff must be logged in)
 router.get('/list', authenticateToken, async (req, res) => {
   try {
-    const patientColumns = await getPatientAssessmentColumns(pool);
-    if (patientColumns.size) {
-      const selectCols = [
-        'id',
-        'patient_name',
-        'mobile_number',
-        'email',
-        'patient_age',
-        'patient_sex',
-        'homa_ir',
-        'tyg_index',
-        'bmi',
-        'created_at'
-      ].filter((col) => patientColumns.has(col));
-
-      const result = await pool.query(
-        `SELECT ${selectCols.join(', ')} FROM patient_assessments ORDER BY created_at DESC NULLS LAST LIMIT 100`
-      );
-      return res.json({ success: true, assessments: result.rows, source: 'patient_assessments' });
+    const patientRows = await listPatientAssessments(100);
+    if (patientRows) {
+      return res.json({
+        success: true,
+        assessments: patientRows,
+        source: 'patient_assessments'
+      });
     }
 
     const result = await pool.query(
