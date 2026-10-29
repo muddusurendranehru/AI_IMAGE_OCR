@@ -248,12 +248,20 @@ const startServer = async () => {
       // Log env status for Render debugging (no secrets)
       const envCheck = {
         DATABASE_URL: !!process.env.DATABASE_URL,
+        PATIENT_ASSESSMENTS_DATABASE_URL: !!(
+          process.env.PATIENT_ASSESSMENTS_DATABASE_URL || process.env.HOMA_MVP_DATABASE_URL
+        ),
         JWT_SECRET: !!process.env.JWT_SECRET,
         NODE_ENV: process.env.NODE_ENV || '(not set)',
       };
       console.log('🔐 Environment (Render):', envCheck);
       if (!envCheck.JWT_SECRET) console.warn('⚠️ JWT_SECRET is NOT set — login/signup will return 500. Set it in Render Dashboard → Environment.');
       if (!envCheck.DATABASE_URL) console.warn('⚠️ DATABASE_URL is NOT set — DB operations will fail. Set it in Render Dashboard → Environment.');
+      if (!envCheck.PATIENT_ASSESSMENTS_DATABASE_URL) {
+        console.warn(
+          '⚠️ PATIENT_ASSESSMENTS_DATABASE_URL is NOT set — calculator Save to patient_assessments will return 503. Point it at Neon database drmuddusmvp1.'
+        );
+      }
 
       // Test database connection in background (non-blocking)
       console.log('🔌 Testing database connection in background...');

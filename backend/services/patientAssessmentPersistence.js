@@ -1,15 +1,30 @@
+const { getPatientAssessmentsPool } = require('../config/db');
 const { normalizeIndiaMobile } = require('../utils/indiaMobile');
 
 const AUTO_COLUMNS = new Set(['id', 'created_at', 'updated_at']);
 
+const PATIENT_CONFIG_MISSING_MESSAGE =
+  'Patient assessments database is not configured. Set PATIENT_ASSESSMENTS_DATABASE_URL on Render to the Neon drmuddusmvp1 connection string (HOMA MVP branch), then Manual Deploy.';
+
 let patientAssessmentColumnsCache = null;
 
-async function getPatientAssessmentColumns(pool) {
+function normalizeClerkUserId(raw) {
+  if (raw == null || String(raw).trim() === '') {
+    return null;
+  }
+  return String(raw).trim();
+}
+
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function getPatientAssessmentColumns(patientPool) {
   if (patientAssessmentColumnsCache) {
     return patientAssessmentColumnsCache;
   }
 
-  const result = await pool.query(
+  const result = await patientPool.query(
     `SELECT column_name
      FROM information_schema.columns
      WHERE table_schema = 'public' AND table_name = 'patient_assessments'
@@ -20,20 +35,33 @@ async function getPatientAssessmentColumns(pool) {
   return patientAssessmentColumnsCache;
 }
 
-function buildAssessmentFieldMap(body, enteredBy, normalizedMobile) {
+/**
+ * Build insert column → value map. Uses MVP column names (age, gender, fbs) when present
+ * on the target schema; also includes calculator-native names for other deployments.
+ */
+function buildAssessmentFieldMap(body, normalizedMobile, columns) {
   const d = body || {};
   const map = {
     patient_name: d.patient_name,
     mobile_number: normalizedMobile,
     email: d.email || null,
-    clerk_user_id: d.clerk_user_id || null,
-    patient_age: d.patient_age,
-    patient_sex: d.patient_sex,
-    registration_no: d.registration_no,
-    assessment_date: d.assessment_date,
+    clerk_user_id: normalizeClerkUserId(d.clerk_user_id),
     height_cm: d.height_cm,
     weight_kg: d.weight_kg,
     waist_cm: d.waist_cm,
+    fasting_insulin: d.fasting_insulin,
+    hba1c: d.hba1c,
+    hdl: d.hdl,
+    ldl: d.ldl,
+    triglycerides: d.triglycerides,
+    age: d.patient_age,
+    gender: d.patient_sex,
+    fbs: d.fasting_glucose,
+    patient_age: d.patient_age,
+    patient_sex: d.patient_sex,
+    fasting_glucose: d.fasting_glucose,
+    registration_no: d.registration_no,
+    assessment_date: d.assessment_date,
     hip_cm: d.hip_cm,
     neck_cm: d.neck_cm,
     calf_cm: d.calf_cm,
@@ -41,12 +69,6 @@ function buildAssessmentFieldMap(body, enteredBy, normalizedMobile) {
     handgrip_kg: d.handgrip_kg,
     gait_time_sec: d.gait_time_sec,
     chair_stand_sec: d.chair_stand_sec,
-    fasting_glucose: d.fasting_glucose,
-    fasting_insulin: d.fasting_insulin,
-    triglycerides: d.triglycerides,
-    hba1c: d.hba1c,
-    ldl: d.ldl,
-    hdl: d.hdl,
     c_peptide: d.c_peptide,
     proinsulin: d.proinsulin,
     fecal_elastase: d.fecal_elastase,
@@ -73,16 +95,32 @@ function buildAssessmentFieldMap(body, enteredBy, normalizedMobile) {
     bmi: d.bmi,
     whr: d.whr,
     whtr: d.whtr,
-    cwr: d.cwr,
-    entered_by: enteredBy,
-    staff_user_id: enteredBy,
-    uploaded_by: enteredBy
+    cwr: d.cwr
   };
+
+  if (columns.has('program_start_date')) {
+    const psd = d.program_start_date;
+    map.program_start_date =
+      psd != null && String(psd).trim() !== '' ? psd : todayDateString();
+  }
 
   return map;
 }
 
-async function insertIntoPatientAssessments(pool, body, enteredBy) {
+function resolvePatientAssessmentsPool() {
+  const pool = getPatientAssessmentsPool();
+  if (!pool) {
+    const err = new Error(PATIENT_CONFIG_MISSING_MESSAGE);
+    err.statusCode = 503;
+    throw err;
+  }
+  return pool;
+}
+
+async function insertIntoPatientAssessments(body, enteredBy) {
+  void enteredBy;
+  const pool = resolvePatientAssessmentsPool();
+
   const mobileResult = normalizeIndiaMobile(body.mobile_number);
   if (!mobileResult.ok) {
     const err = new Error(mobileResult.error);
@@ -93,17 +131,20 @@ async function insertIntoPatientAssessments(pool, body, enteredBy) {
   const columns = await getPatientAssessmentColumns(pool);
   if (!columns.size) {
     const err = new Error(
-      'patient_assessments table is not available on this database. Contact administrator.'
+      'patient_assessments table is not available on the HOMA MVP database. Contact administrator.'
     );
     err.statusCode = 503;
     throw err;
   }
 
-  const fieldMap = buildAssessmentFieldMap(body, enteredBy, mobileResult.mobile);
+  const fieldMap = buildAssessmentFieldMap(body, mobileResult.mobile, columns);
   const insertColumns = [];
   const values = [];
 
   for (const [column, value] of Object.entries(fieldMap)) {
+    if (column === 'user_id') {
+      continue;
+    }
     if (!columns.has(column) || AUTO_COLUMNS.has(column)) {
       continue;
     }
@@ -221,6 +262,49 @@ async function calculatorAssessmentsTableExists(pool) {
   return result.rows[0].exists;
 }
 
+function buildPatientAssessmentListSelect(columns) {
+  const parts = ['id', 'patient_name', 'mobile_number', 'email', 'created_at'];
+
+  if (columns.has('patient_age')) {
+    parts.push('patient_age');
+  } else if (columns.has('age')) {
+    parts.push('age AS patient_age');
+  }
+
+  if (columns.has('patient_sex')) {
+    parts.push('patient_sex');
+  } else if (columns.has('gender')) {
+    parts.push('gender AS patient_sex');
+  }
+
+  for (const col of ['homa_ir', 'tyg_index', 'bmi']) {
+    if (columns.has(col)) {
+      parts.push(col);
+    }
+  }
+
+  return parts.join(', ');
+}
+
+async function listPatientAssessments(limit = 100) {
+  const pool = getPatientAssessmentsPool();
+  if (!pool) {
+    return null;
+  }
+
+  const columns = await getPatientAssessmentColumns(pool);
+  if (!columns.size) {
+    return null;
+  }
+
+  const selectList = buildPatientAssessmentListSelect(columns);
+  const result = await pool.query(
+    `SELECT ${selectList} FROM patient_assessments ORDER BY created_at DESC NULLS LAST LIMIT $1`,
+    [limit]
+  );
+  return result.rows;
+}
+
 function clearPatientAssessmentColumnsCache() {
   patientAssessmentColumnsCache = null;
 }
@@ -230,6 +314,8 @@ module.exports = {
   insertIntoCalculatorAssessments,
   calculatorAssessmentsTableExists,
   getPatientAssessmentColumns,
+  listPatientAssessments,
   clearPatientAssessmentColumnsCache,
-  normalizeIndiaMobile
+  normalizeIndiaMobile,
+  PATIENT_CONFIG_MISSING_MESSAGE
 };

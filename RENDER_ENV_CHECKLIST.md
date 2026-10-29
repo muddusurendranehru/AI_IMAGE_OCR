@@ -14,6 +14,7 @@ Use this checklist to fix **500 Internal Server Error** on login/signup when dep
 |----------------|----------|-------------|
 | `DATABASE_URL` | **Yes**  | Neon PostgreSQL connection string. Example: `postgresql://user:pass@host.neon.tech/dbname?sslmode=require`. Get it from Neon dashboard → Connection string. |
 | `JWT_SECRET`   | **Yes**  | Secret used to sign JWT tokens. If missing, **login and signup return 500**. Use a long random string (e.g. 32+ chars). Example: `openssl rand -hex 32`. |
+| `PATIENT_ASSESSMENTS_DATABASE_URL` | **Yes** (calculator Save) | Neon connection string for database **`drmuddusmvp1`** (HOMA MVP — same Neon project as admin search). Staff auth stays on `DATABASE_URL` (AI_OCR1). Optional fallback name: `HOMA_MVP_DATABASE_URL`. After adding, use **Manual Deploy**. |
 
 ---
 
@@ -61,6 +62,7 @@ Use this checklist to fix **500 Internal Server Error** on login/signup when dep
 ## Summary
 
 - **Login/signup 500** is often caused by **missing `JWT_SECRET`** or **wrong/missing `DATABASE_URL`**.
+- **Calculator “Save to Records” 503** means **`PATIENT_ASSESSMENTS_DATABASE_URL`** is missing or wrong — set it to Neon **`drmuddusmvp1`**, then Manual Deploy.
 - Set `DATABASE_URL` and `JWT_SECRET` in Render → Environment, then redeploy.
 - Use **Logs** and **GET /api/health** to confirm env and DB status.
 
